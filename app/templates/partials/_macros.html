@@ -1,0 +1,79 @@
+{# ---------- Status / condition badges ---------- #}
+{% macro badge_verified() %}
+  <span class="bd-badge bd-badge--verified">
+    <svg class="bd-badge__icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.2 11.6 3 8.4l1-1 2.2 2.2 5-5 1 1z"/></svg>
+    Verified advisory
+  </span>
+{% endmacro %}
+
+{% macro badge_pending() %}
+  <span class="bd-badge bd-badge--pending">
+    <svg class="bd-badge__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5V8l2.4 1.6"/></svg>
+    Pending Verification
+  </span>
+{% endmacro %}
+
+{% macro badge_rejected() %}
+  <span class="bd-badge bd-badge--rejected">
+    <svg class="bd-badge__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
+    Rejected
+  </span>
+{% endmacro %}
+
+{% macro badge_resolved() %}
+  <span class="bd-badge bd-badge--resolved">
+    <svg class="bd-badge__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 8.2l1.8 1.8 3.4-3.6"/></svg>
+    Resolved
+  </span>
+{% endmacro %}
+
+{# Road passability pills #}
+{% macro pill_passable() %}<span class="bd-pill bd-pill--passable">Passable</span>{% endmacro %}
+{% macro pill_caution() %}<span class="bd-pill bd-pill--caution">Difficult to pass</span>{% endmacro %}
+{% macro pill_not_passable() %}<span class="bd-pill bd-pill--not-passable">Not passable</span>{% endmacro %}
+
+{# Generic tag chip (e.g., "Flood reported") #}
+{% macro chip(label) %}<span class="bd-chip">{{ label }}</span>{% endmacro %}
+
+{# ---------- Buttons ---------- #}
+{% macro btn_primary(label, icon=None, href='#', type='button', extra='') %}
+  <{{ 'a' if href else 'button' }} class="bd-btn bd-btn--primary {{ extra }}"
+     {% if href %}href="{{ href }}"{% else %}type="{{ type }}"{% endif %}>
+    {% if icon %}<span class="bd-btn__icon">{{ icon|safe }}</span>{% endif %}{{ label }}
+  </{{ 'a' if href else 'button' }}>
+{% endmacro %}
+
+{% macro btn_secondary(label, href='#', icon=None, extra='') %}
+  <a href="{{ href }}" class="bd-btn bd-btn--secondary {{ extra }}">
+    {% if icon %}<span class="bd-btn__icon">{{ icon|safe }}</span>{% endif %}{{ label }}
+  </a>
+{% endmacro %}
+
+{% macro btn_quiet(label, href='#') %}
+  <a href="{{ href }}" class="bd-btn bd-btn--quiet">{{ label }}</a>
+{% endmacro %}
+
+{# ---------- Section eyebrow + title ---------- #}
+{% macro eyebrow(text) %}<p class="bd-eyebrow">{{ text }}</p>{% endmacro %}
+
+{# ---------- Alerts ---------- #}
+{% macro alert_info(title, text) %}
+  <div class="bd-alert bd-alert--info" role="note">
+    <svg class="bd-alert__icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v5M10 6.4v.2"/></svg>
+    <div><p class="bd-alert__title">{{ title }}</p><p class="bd-alert__text">{{ text }}</p></div>
+  </div>
+{% endmacro %}
+
+{% macro alert_warning(title, text) %}
+  <div class="bd-alert bd-alert--warning" role="note">
+    <svg class="bd-alert__icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 18 16.5H2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 8v4M10 14v.2"/></svg>
+    <div><p class="bd-alert__title">{{ title }}</p><p class="bd-alert__text">{{ text }}</p></div>
+  </div>
+{% endmacro %}
+
+{% macro alert_success(title, text) %}
+  <div class="bd-alert bd-alert--success" role="note">
+    <svg class="bd-alert__icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 10.2l2.4 2.4 4.6-4.8"/></svg>
+    <div><p class="bd-alert__title">{{ title }}</p><p class="bd-alert__text">{{ text }}</p></div>
+  </div>
+{% endmacro %}

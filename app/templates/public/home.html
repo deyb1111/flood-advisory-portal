@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import badge_verified, pill_not_passable, pill_caution, alert_info %}
+{% set active_page = 'home' %}
+{% block title %}Home · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section">
+
+  {# ---------- Hero ---------- #}
+  <section class="bd-hero mb-4">
+    <p class="bd-eyebrow">Community flood &amp; road information</p>
+    <h1>Plan a safer route through your barangay.</h1>
+    <p>See verified flood and road conditions for Kalawaan, San Joaquin, and Bambang, or share what you observe for barangay review.</p>
+    <div class="bd-hero__actions">
+      <a href="{{ url_for('resident.report') }}" class="bd-btn bd-btn--primary">
+        <span class="bd-btn__icon"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></span>
+        Report Flood / Road Condition
+      </a>
+      <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">
+        <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M4 6l6-2 6 2v8l-6 2-6-2z"/><path d="M10 4v12"/></svg></span>
+        View Map
+      </a>
+    </div>
+  </section>
+
+  {# ---------- Info alert ---------- #}
+  <div class="mb-4">
+    {{ alert_info(
+      'Community information, carefully verified',
+      'Updates are near-real-time and community-reported. Only reports verified by authorized barangay personnel appear as official advisories. Always use your own judgment when traveling.'
+    ) }}
+  </div>
+
+  {# ---------- Barangay filter pills + last refreshed ---------- #}
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+    <span class="bd-text-muted" style="font-size:13px;">Show summary for</span>
+    <div class="bd-filter-row">
+      <button class="bd-filter is-active" type="button">All 3 barangays</button>
+      <button class="bd-filter" type="button">Kalawaan <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+      <button class="bd-filter" type="button">San Joaquin <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+      <button class="bd-filter" type="button">Bambang <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+    </div>
+    <span class="ms-auto bd-text-muted" style="font-size:12.5px;" data-poll="last-updated">Last refreshed today, 3:42 PM</span>
+  </div>
+
+  {# ---------- Stat cards ---------- #}
+  <div class="bd-stats-row">
+    <div class="bd-stat">
+      <p class="bd-stat__label">Active verified advisories</p>
+      <p class="bd-stat__value bd-stat__value--blue">6</p>
+      <p class="bd-stat__note">Across all three covered barangays</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Flood conditions</p>
+      <p class="bd-stat__value bd-stat__value--amber">3 roads</p>
+      <p class="bd-stat__note">2 moderate · 1 knee-deep section</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Road conditions</p>
+      <p class="bd-stat__value bd-stat__value--amber">2 affected</p>
+      <p class="bd-stat__note">1 not passable · 1 difficult</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Recently cleared</p>
+      <p class="bd-stat__value bd-stat__value--green">4</p>
+      <p class="bd-stat__note">Resolved in the last 24 hours</p>
+    </div>
+  </div>
+
+  {# ---------- Two-column content ---------- #}
+  <div class="row g-4 mt-1">
+
+    {# Affected roads #}
+    <div class="col-lg-7">
+      <div class="bd-card h-100">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h2 class="bd-card__title mb-1">Affected roads</h2>
+            <p class="bd-text-muted mb-0" style="font-size:13px;">Verified conditions with active travel impact</p>
+          </div>
+          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--quiet">
+            <span class="bd-btn__icon"><svg viewBox="0 0 16 16"><path d="M3 11l5-6 5 6M8 5V2"/></svg></span>
+            Open full map
+          </a>
+        </div>
+
+        <div class="bd-affected-row">
+          <div class="bd-affected-row__mark bd-affected-row__mark--red">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
+          </div>
+          <div class="bd-affected-row__body">
+            <p class="bd-affected-row__title">A. Sandoval Avenue near E. Santos</p>
+            <p class="bd-affected-row__meta">Barangay San Joaquin · Knee-deep floodwater</p>
+          </div>
+          {{ pill_not_passable() }}
+          <span class="bd-affected-row__time">3:36 PM</span>
+        </div>
+
+        <div class="bd-affected-row">
+          <div class="bd-affected-row__mark bd-affected-row__mark--amber">
+            <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
+          </div>
+          <div class="bd-affected-row__body">
+            <p class="bd-affected-row__title">Lopez Jaena Street</p>
+            <p class="bd-affected-row__meta">Barangay Kalawaan · Gutter-deep floodwater</p>
+          </div>
+          {{ pill_caution() }}
+          <span class="bd-affected-row__time">3:21 PM</span>
+        </div>
+
+        <div class="bd-affected-row">
+          <div class="bd-affected-row__mark bd-affected-row__mark--amber">
+            <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
+          </div>
+          <div class="bd-affected-row__body">
+            <p class="bd-affected-row__title">M. Concepcion Avenue</p>
+            <p class="bd-affected-row__meta">Barangay Bambang · Slow traffic near flooded curb</p>
+          </div>
+          {{ pill_caution() }}
+          <span class="bd-affected-row__time">2:58 PM</span>
+        </div>
+      </div>
+    </div>
+
+    {# Recent verified advisories #}
+    <div class="col-lg-5">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2 class="bd-card__title mb-1">Recent verified advisories</h2>
+          <p class="bd-text-muted mb-0" style="font-size:12.5px;">Most recently updated first</p>
+        </div>
+        <a href="{{ url_for('public.advisories') }}" class="bd-btn bd-btn--quiet">See all</a>
+      </div>
+
+      <article class="bd-advisory-card mb-3" data-poll="advisory">
+        <div class="bd-advisory-card__top">
+          {{ badge_verified() }}
+          <span class="bd-advisory-card__time">Updated 6 min ago</span>
+        </div>
+        <h3 class="bd-advisory-card__title">Flooding near A. Sandoval intersection</h3>
+        <p class="bd-advisory-card__loc">San Joaquin · A. Sandoval Ave</p>
+        <div class="bd-advisory-card__tags">
+          {{ pill_not_passable() }}
+          <span class="bd-chip">Flood reported</span>
+        </div>
+        <div class="bd-advisory-card__actions">
+          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">
+            <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
+            View on Map
+          </a>
+          <a href="{{ url_for('public.advisory_detail', advisory_id='ADV-SJ-2026-1005-031') }}">View details</a>
+        </div>
+      </article>
+
+      <article class="bd-advisory-card" data-poll="advisory">
+        <div class="bd-advisory-card__top">
+          {{ badge_verified() }}
+          <span class="bd-advisory-card__time">Updated 21 min ago</span>
+        </div>
+        <h3 class="bd-advisory-card__title">Water receding along Lopez Jaena</h3>
+        <p class="bd-advisory-card__loc">Kalawaan · Lopez Jaena St</p>
+        <div class="bd-advisory-card__tags">
+          {{ pill_caution() }}
+          <span class="bd-chip">Flood reported</span>
+        </div>
+        <div class="bd-advisory-card__actions">
+          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">
+            <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
+            View on Map
+          </a>
+          <a href="#">View details</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/polling.js') }}"></script>{% endblock %}

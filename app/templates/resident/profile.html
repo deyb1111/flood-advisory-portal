@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% set active_page = 'profile' %}
+{% block title %}Profile · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section" style="max-width:1000px;">
+
+  <p class="bd-eyebrow">Account</p>
+  <h1 class="bd-page-title">Profile</h1>
+  <p class="bd-page-sub mb-4">Keep the details used for your report history current.</p>
+
+  <div class="bd-profile">
+
+    {# ---------- Profile card ---------- #}
+    <aside class="bd-card bd-profile-card">
+      <div class="bd-profile-avatar" aria-hidden="true"></div>
+      <p class="bd-profile-name">Maria Santos</p>
+      <p class="bd-profile-email">maria.santos@example.com</p>
+      <span class="bd-chip">Resident account</span>
+      <p class="bd-text-muted mt-3" style="font-size:12.5px;">Used only for report history and verification updates in this portal.</p>
+    </aside>
+
+    {# ---------- Form ---------- #}
+    <section class="bd-card">
+      <h2 class="bd-card__title">Resident information</h2>
+      <form method="POST" action="#">
+
+        <div class="bd-form-row">
+          <label class="bd-field">
+            <span class="bd-field__label">First name</span>
+            <input type="text" class="bd-input" name="first_name" value="Maria" />
+          </label>
+          <label class="bd-field">
+            <span class="bd-field__label">Last name</span>
+            <input type="text" class="bd-input" name="last_name" value="Santos" />
+          </label>
+        </div>
+
+        <label class="bd-field">
+          <span class="bd-field__label">Email address</span>
+          <input type="email" class="bd-input" name="email" value="maria.santos@example.com" />
+        </label>
+
+        <label class="bd-field">
+          <span class="bd-field__label">Home barangay</span>
+          <select class="bd-select" name="barangay_id">
+            <option>Barangay Kalawaan</option>
+            <option selected>Barangay San Joaquin</option>
+            <option>Barangay Bambang</option>
+          </select>
+        </label>
+
+        <label class="bd-field">
+          <span class="bd-field__label">Preferred language</span>
+          <select class="bd-select" name="language">
+            <option>English</option>
+            <option>Filipino</option>
+          </select>
+        </label>
+
+        <div class="bd-toggle-row mb-4">
+          <div>
+            <p class="bd-toggle-row__title">Email status updates</p>
+            <p class="bd-toggle-row__help">Receive review results for reports you submit.</p>
+          </div>
+          <label class="bd-switch">
+            <input type="checkbox" name="email_updates" checked />
+            <span class="bd-switch__slider"></span>
+          </label>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('auth.logout') }}" class="bd-btn bd-btn--quiet">Sign out</a>
+          <button type="submit" class="bd-btn bd-btn--primary">Save changes</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

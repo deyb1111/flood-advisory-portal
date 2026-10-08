@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import badge_pending, alert_warning %}
+{% set active_page = 'my_reports' %}
+{% block title %}Flood report · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section" style="max-width:1040px;">
+
+  <nav class="bd-crumbs">
+    <a href="{{ url_for('resident.my_reports') }}">My Reports</a>
+    <span class="bd-crumbs__sep">›</span>
+    <span>BDP-2026-1005-1842</span>
+  </nav>
+
+  <div class="mb-3">{{ badge_pending() }}</div>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h1 class="bd-page-title">Flood report</h1>
+      <p class="bd-page-sub">Reference BDP-2026-1005-1842</p>
+    </div>
+    <a href="{{ url_for('resident.my_reports') }}" class="bd-btn bd-btn--secondary">Back to My Reports</a>
+  </div>
+
+  <div class="mb-4">
+    {{ alert_warning(
+      'Not yet an official advisory',
+      'This submission is awaiting review. It is visible only in your report history and will not appear as verified public information unless authorized barangay personnel confirm it.'
+    ) }}
+  </div>
+
+  <div class="bd-detail-grid">
+
+    <div class="bd-card">
+      <h2 class="bd-card__title">Submitted information</h2>
+
+      <div class="bd-kv">
+        <div>
+          <p class="bd-kv__label">Report type</p>
+          <p class="bd-kv__value">Flood</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Barangay</p>
+          <p class="bd-kv__value">Barangay San Joaquin</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Street / road</p>
+          <p class="bd-kv__value">A. Sandoval Avenue</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Nearest landmark</p>
+          <p class="bd-kv__value">Near E. Santos Street corner</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Observation time</p>
+          <p class="bd-kv__value">October 5, 2026 · 3:28 PM</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Submitted time</p>
+          <p class="bd-kv__value">October 5, 2026 · 3:31 PM</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Water level / flood condition</p>
+          <p class="bd-kv__value">Knee-deep, approximately 45 cm</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Road passability</p>
+          <p class="bd-kv__value">Not passable</p>
+        </div>
+      </div>
+
+      <p class="bd-kv__label">Description</p>
+      <p style="font-size:14.5px;">Floodwater covers both lanes. Pedestrians are turning back and vehicles are rerouting toward M. Suarez Avenue.</p>
+
+      <div class="mt-3">
+        <img src="{{ url_for('static', filename='img/placeholder-flood.jpg') }}"
+             alt="Submitted photo (placeholder)"
+             style="max-width:340px;width:100%;border-radius:8px;" />
+      </div>
+
+      <div class="bd-form-map mt-3" style="height:220px;">
+        <div id="report-detail-map" aria-label="Report location map"></div>
+      </div>
+    </div>
+
+    <div class="bd-card">
+      <h2 class="bd-card__title">Status timeline</h2>
+
+      <ul class="bd-timeline">
+        <li>
+          <span class="bd-timeline__dot bd-timeline__dot--done">
+            <svg viewBox="0 0 16 16"><path d="M4 8.5l3 3 6-7"/></svg>
+          </span>
+          <div>
+            <div class="d-flex justify-content-between">
+              <p class="bd-timeline__title">Report submitted</p>
+              <span class="bd-timeline__time">3:31 PM</span>
+            </div>
+            <p class="bd-timeline__meta">Your report and optional photo were received.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bd-timeline__dot bd-timeline__dot--current">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none"/><path d="M8 5.5V8l2 1.5"/></svg>
+          </span>
+          <div>
+            <div class="d-flex justify-content-between">
+              <p class="bd-timeline__title">Pending Verification</p>
+              <span class="bd-timeline__time">Current</span>
+            </div>
+            <p class="bd-timeline__meta">Authorized Barangay San Joaquin personnel have been notified for review.</p>
+          </div>
+        </li>
+        <li>
+          <span class="bd-timeline__dot">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none"/></svg>
+          </span>
+          <div>
+            <div class="d-flex justify-content-between">
+              <p class="bd-timeline__title">Verification result</p>
+              <span class="bd-timeline__time">—</span>
+            </div>
+            <p class="bd-timeline__meta">A result will appear here after review. You cannot publish or change the verification status.</p>
+          </div>
+        </li>
+      </ul>
+
+      <hr class="bd-divider" />
+
+      <div class="bd-record-row">
+        <p class="bd-record-row__label">Latest update</p>
+        <p class="bd-record-row__value">October 5, 2026 · 3:31 PM</p>
+      </div>
+      <div class="bd-record-row">
+        <p class="bd-record-row__label">Verification result</p>
+        <p class="bd-record-row__value">Awaiting barangay review</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!document.getElementById('report-detail-map')) return;
+    var map = L.map('report-detail-map', { zoomControl: true, attributionControl: false })
+               .setView([14.5764, 121.0851], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.circleMarker([14.5764, 121.0851], {
+      radius: 8, color: '#b13a3a', fillColor: '#b13a3a', fillOpacity: 1, weight: 3
+    }).addTo(map);
+  });
+</script>
+{% endblock %}

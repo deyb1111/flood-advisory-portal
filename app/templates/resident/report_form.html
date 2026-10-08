@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import alert_warning %}
+{% set active_page = 'report' %}
+{% block title %}Report a flood or road condition · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section" style="max-width:920px;">
+
+  <p class="bd-eyebrow">Resident report</p>
+  <h1 class="bd-page-title">Report a flood or road condition</h1>
+  <p class="bd-page-sub mb-4">Share a current observation within Kalawaan, San Joaquin, or Bambang. Fields marked * are required.</p>
+
+  <div class="bd-steps">
+    <div class="bd-steps__item is-active">1 · Report details</div>
+    <div class="bd-steps__item">2 · Review &amp; submit</div>
+  </div>
+
+  <form id="report-form" method="POST" action="{{ url_for('resident.report') }}" enctype="multipart/form-data" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}" />
+
+    {# ---------- Step 1: type ---------- #}
+    <section class="bd-step-card">
+      <div class="bd-step-head">
+        <div class="bd-step-num">1</div>
+        <div>
+          <h2 class="bd-step-title">What are you reporting?</h2>
+          <p class="bd-step-help">Choose the option that best describes what you can currently observe.</p>
+        </div>
+      </div>
+
+      <div class="bd-radio-cards">
+        <label class="bd-radio-card">
+          <input type="radio" name="report_type" value="flood" checked />
+          <span class="bd-radio-card__icon">
+            <svg viewBox="0 0 20 20"><path d="M4 11c2-3 4-3 6 0s4 3 6 0"/><path d="M4 15c2-3 4-3 6 0s4 3 6 0"/></svg>
+          </span>
+          <span>
+            <span class="bd-radio-card__title">Flood</span>
+            <span class="bd-radio-card__desc">Water level or flooding at a location</span>
+          </span>
+          <span class="bd-radio-card__check"></span>
+        </label>
+
+        <label class="bd-radio-card">
+          <input type="radio" name="report_type" value="traffic" />
+          <span class="bd-radio-card__icon">
+            <svg viewBox="0 0 20 20"><path d="M4 13l2-5h8l2 5v3h-2M4 16h2"/><circle cx="7" cy="16" r="1.6"/><circle cx="13" cy="16" r="1.6"/></svg>
+          </span>
+          <span>
+            <span class="bd-radio-card__title">Flood-related road / traffic condition</span>
+            <span class="bd-radio-card__desc">Passability, obstruction, or traffic impact</span>
+          </span>
+          <span class="bd-radio-card__check"></span>
+        </label>
+      </div>
+    </section>
+
+    {# ---------- Step 2: location ---------- #}
+    <section class="bd-step-card">
+      <div class="bd-step-head">
+        <div class="bd-step-num">2</div>
+        <div>
+          <h2 class="bd-step-title">Where did you observe it?</h2>
+          <p class="bd-step-help">This portal accepts reports only in the three covered barangays.</p>
+        </div>
+      </div>
+
+      <div class="bd-form-row">
+        <label class="bd-field">
+          <span class="bd-field__label">Barangay *</span>
+          <select class="bd-select" name="barangay_id" required>
+            <option value="1">Barangay San Joaquin</option>
+            <option value="2">Barangay Kalawaan</option>
+            <option value="3">Barangay Bambang</option>
+          </select>
+        </label>
+        <label class="bd-field">
+          <span class="bd-field__label">Street / road *</span>
+          <select class="bd-select" name="road_id" required>
+            <option value="">Select a road</option>
+            <option>A. Sandoval Avenue</option>
+            <option>Lopez Jaena Street</option>
+            <option>F. Mariano Avenue</option>
+            <option>M. Concepcion Avenue</option>
+            <option>Ilaya Street</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="bd-form-map">
+        <div id="map-picker" aria-label="Pin your observation location"></div>
+        <button type="button" class="bd-form-map__action" id="btn-use-location">
+          <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
+          Use my location
+        </button>
+      </div>
+      <input type="hidden" name="latitude" id="input-lat" value="14.5764" />
+      <input type="hidden" name="longitude" id="input-lng" value="121.0851" />
+
+      <label class="bd-field">
+        <span class="bd-field__label">Landmark or nearest intersection</span>
+        <input type="text" class="bd-input" name="landmark" placeholder="e.g., Near E. Santos Street corner" />
+        <span class="bd-field__help">Add a recognizable landmark if the pin is not exact.</span>
+      </label>
+    </section>
+
+    {# ---------- Step 3: condition ---------- #}
+    <section class="bd-step-card">
+      <div class="bd-step-head">
+        <div class="bd-step-num">3</div>
+        <div>
+          <h2 class="bd-step-title">Describe the current condition</h2>
+          <p class="bd-step-help">Use the options below to help other residents understand the travel impact.</p>
+        </div>
+      </div>
+
+      <div class="bd-form-row">
+        <label class="bd-field">
+          <span class="bd-field__label">Water level / flood condition *</span>
+          <select class="bd-select" name="water_level" required>
+            <option value="none">No flooding</option>
+            <option value="gutter">Gutter-deep</option>
+            <option value="ankle">Ankle-deep</option>
+            <option value="knee" selected>Knee-deep (approximately 45 cm)</option>
+            <option value="waist_or_higher">Waist-deep or higher</option>
+          </select>
+        </label>
+        <label class="bd-field">
+          <span class="bd-field__label">Road passability *</span>
+          <select class="bd-select" name="road_status" required>
+            <option value="passable">Passable</option>
+            <option value="caution">Difficult to pass</option>
+            <option value="not_passable" selected>Not passable</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="bd-field">
+        <span class="bd-field__label">Description *</span>
+        <textarea class="bd-textarea" name="description" rows="3" required>Floodwater covers both lanes. Pedestrians are turning back and vehicles are rerouting toward M. Suarez Avenue.</textarea>
+      </label>
+
+      <div class="bd-form-row">
+        <label class="bd-field">
+          <span class="bd-field__label">Observation date *</span>
+          <input type="date" class="bd-input" name="observed_date" value="2026-10-05" required />
+        </label>
+        <label class="bd-field">
+          <span class="bd-field__label">Observation time *</span>
+          <input type="time" class="bd-input" name="observed_time" value="15:28" required />
+        </label>
+      </div>
+    </section>
+
+    {# ---------- Step 4: photo ---------- #}
+    <section class="bd-step-card">
+      <div class="bd-step-head">
+        <div class="bd-step-num">4</div>
+        <div>
+          <h2 class="bd-step-title">Add a photo (optional)</h2>
+          <p class="bd-step-help">A clear photo can help barangay personnel verify the report. Avoid faces and vehicle plates when possible.</p>
+        </div>
+      </div>
+
+      <label class="bd-dropzone" for="input-photo" id="dropzone">
+        <svg class="bd-dropzone__icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke-width="1.5"/><circle cx="9" cy="10" r="2" fill="none"/><path d="M4 18l5-5 4 4 3-3 4 4" fill="none"/></svg>
+        <p class="bd-dropzone__title">Choose a photo or drag it here</p>
+        <p class="bd-dropzone__help">JPG or PNG · up to 8 MB</p>
+        <input type="file" id="input-photo" name="photo" accept="image/jpeg,image/png" hidden />
+      </label>
+
+      <div id="photo-preview" class="mt-3" hidden>
+        <img id="photo-preview-img" alt="Selected photo preview" style="max-width:240px;border-radius:8px;" />
+      </div>
+    </section>
+
+    <div class="mb-4">
+      {{ alert_warning(
+        'Verification before publication',
+        'Your report will be submitted as Pending Verification. It will not appear as an official advisory until authorized barangay personnel review and verify it. Residents cannot publish, verify, or reject reports.'
+      ) }}
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <a href="#" class="bd-btn bd-btn--quiet">Save and return later</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('public.home') }}" class="bd-btn bd-btn--secondary">Cancel</a>
+        <button type="submit" class="bd-btn bd-btn--primary">
+          <span class="bd-btn__icon"><svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+          Review report
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/report_form.js') }}"></script>
+{% endblock %}

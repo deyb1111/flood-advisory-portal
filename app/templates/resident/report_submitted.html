@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import badge_pending, alert_warning %}
+{% set active_page = 'report' %}
+{% block title %}Report received · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section" style="max-width:760px;">
+
+  <div class="bd-confirm">
+    <div class="bd-confirm__check">
+      <svg viewBox="0 0 32 32"><path d="M8 16.5l6 6 12-13"/></svg>
+    </div>
+    <span class="bd-badge bd-badge--verified mb-3">Report received</span>
+    <h1>Thank you for helping your community.</h1>
+    <p>Your observation has been sent to authorized Barangay San Joaquin personnel for review.</p>
+
+    <div class="bd-card bd-confirm__card">
+      <p class="bd-eyebrow mb-1">Report reference</p>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <strong style="font-size:22px;">BDP-2026-1005-1842</strong>
+        {{ badge_pending() }}
+      </div>
+      <div class="bd-form-row">
+        <div>
+          <p class="bd-kv__label">Submitted location</p>
+          <p class="bd-kv__value" style="font-size:14px;">A. Sandoval Ave near E. Santos St, Barangay San Joaquin</p>
+        </div>
+        <div>
+          <p class="bd-kv__label">Submitted</p>
+          <p class="bd-kv__value" style="font-size:14px;">Oct 5, 2026 · 3:31 PM</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-4 text-start">
+      {{ alert_warning(
+        'What happens next',
+        'Your report is not yet an official advisory and will not appear in the verified advisory list until reviewed. You can follow its status from My Reports using the reference above.'
+      ) }}
+    </div>
+
+    <div class="d-flex justify-content-center gap-2">
+      <a href="{{ url_for('resident.my_reports') }}" class="bd-btn bd-btn--primary">
+        <span class="bd-btn__icon"><svg viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/><path d="M5 7h6M5 10h4"/></svg></span>
+        View My Reports
+      </a>
+      <a href="{{ url_for('public.home') }}" class="bd-btn bd-btn--secondary">Return Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

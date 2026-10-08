@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import badge_pending, badge_verified, badge_rejected, badge_resolved, alert_info %}
+{% set active_page = 'my_reports' %}
+{% block title %}My Reports · Bantay Daan Pasig{% endblock %}
+
+{% block content %}
+<div class="container bd-section">
+
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <p class="bd-eyebrow">Your submissions</p>
+      <h1 class="bd-page-title">My Reports</h1>
+      <p class="bd-page-sub">Track review progress and verification results for observations you have submitted.</p>
+    </div>
+    <a href="{{ url_for('resident.report') }}" class="bd-btn bd-btn--primary">
+      <span class="bd-btn__icon"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></span>
+      New report
+    </a>
+  </div>
+
+  {# ---------- Stat cards ---------- #}
+  <div class="bd-stats-row">
+    <div class="bd-stat">
+      <p class="bd-stat__label">Pending Verification</p>
+      <p class="bd-stat__value bd-stat__value--amber">1</p>
+      <p class="bd-stat__note">Awaiting authorized review</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Verified</p>
+      <p class="bd-stat__value bd-stat__value--green">1</p>
+      <p class="bd-stat__note">Used in an official advisory</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Resolved</p>
+      <p class="bd-stat__value">1</p>
+      <p class="bd-stat__note">Condition no longer active</p>
+    </div>
+    <div class="bd-stat">
+      <p class="bd-stat__label">Rejected</p>
+      <p class="bd-stat__value bd-stat__value--red">1</p>
+      <p class="bd-stat__note">See the verification result</p>
+    </div>
+  </div>
+
+  {# ---------- Filters ---------- #}
+  <div class="bd-filter-row mb-3">
+    <button class="bd-filter is-active" type="button">All statuses</button>
+    <select class="bd-select" style="width:auto;"><option>All report types</option><option>Flood</option><option>Road condition</option></select>
+    <select class="bd-select" style="width:auto;"><option>Most recent</option><option>Oldest</option></select>
+  </div>
+
+  {# ---------- Table ---------- #}
+  <div class="table-responsive">
+    <table class="bd-table">
+      <thead>
+        <tr>
+          <th>Reference / Type</th>
+          <th>Location</th>
+          <th>Submitted</th>
+          <th>Status</th>
+          <th>Verification Result</th>
+          <th>Latest Update</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="bd-ref">BDP-2026-1005-1842</span>
+            <span class="bd-ref-sub">Flood report</span>
+          </td>
+          <td>A. Sandoval Ave, San Joaquin</td>
+          <td>Today · 3:31 PM</td>
+          <td>{{ badge_pending() }}</td>
+          <td>Awaiting barangay review</td>
+          <td>8 min ago</td>
+          <td class="bd-text-right"><a href="{{ url_for('resident.report_detail', report_id='BDP-2026-1005-1842') }}">›</a></td>
+        </tr>
+        <tr>
+          <td>
+            <span class="bd-ref">BDP-2026-1003-1198</span>
+            <span class="bd-ref-sub">Road condition</span>
+          </td>
+          <td>Lopez Jaena St, Kalawaan</td>
+          <td>Oct 3 · 5:18 PM</td>
+          <td>{{ badge_verified() }}</td>
+          <td>Included in verified advisory</td>
+          <td>Oct 3 · 5:46 PM</td>
+          <td class="bd-text-right"><a href="#">›</a></td>
+        </tr>
+        <tr>
+          <td>
+            <span class="bd-ref">BDP-2026-0929-0874</span>
+            <span class="bd-ref-sub">Flood report</span>
+          </td>
+          <td>F. Mariano Ave, Bambang</td>
+          <td>Sep 29 · 7:04 AM</td>
+          <td>{{ badge_rejected() }}</td>
+          <td>Photo did not match location</td>
+          <td>Sep 29 · 9:22 AM</td>
+          <td class="bd-text-right"><a href="#">›</a></td>
+        </tr>
+        <tr>
+          <td>
+            <span class="bd-ref">BDP-2026-0921-0521</span>
+            <span class="bd-ref-sub">Road condition</span>
+          </td>
+          <td>Ilaya St, Kalawaan</td>
+          <td>Sep 21 · 4:40 PM</td>
+          <td>{{ badge_resolved() }}</td>
+          <td>Verified, then marked resolved</td>
+          <td>Sep 22 · 8:15 AM</td>
+          <td class="bd-text-right"><a href="#">›</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4">
+    {{ alert_info(
+      'About report visibility',
+      'A submitted report stays in My Reports while pending. Only verified information may be used in a public official advisory, and residents do not have publication controls.'
+    ) }}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+<header class="bd-header">
+  <div class="container bd-header__inner">
+
+    <a class="bd-brand" href="{{ url_for('public.home') }}">
+      <span class="bd-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><path d="M4 18c3-4 6-4 9 0s6 4 9 0 4-3 6-1"/><path d="M4 24c3-4 6-4 9 0s6 4 9 0 4-3 6-1"/></svg>
+      </span>
+      <span class="bd-brand__text">
+        <span class="bd-brand__name">Bantay Daan Pasig</span>
+        <span class="bd-brand__sub">KALAWaan · San Joaquin · Bambang</span>
+      </span>
+    </a>
+
+    <button class="bd-header__toggle" type="button" aria-label="Toggle navigation"
+            data-bs-toggle="collapse" data-bs-target="#bdNav">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav id="bdNav" class="bd-nav collapse">
+      <ul class="bd-nav__list">
+        {% set nav = [
+          ('public.home',       'Home',       'home'),
+          ('resident.report',   'Report',     'report'),
+          ('public.map',        'Map',        'map'),
+          ('public.advisories', 'Advisories', 'advisories'),
+          ('resident.my_reports','My Reports','my_reports'),
+          ('resident.profile',  'Profile',    'profile')
+        ] %}
+        {% for endpoint, label, key in nav %}
+          <li>
+            <a class="bd-nav__link {% if active_page == key %}is-active{% endif %}"
+               href="{{ url_for(endpoint) }}">{{ label }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="bd-user dropdown">
+      <button class="bd-user__btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="bd-avatar" aria-hidden="true"></span>
+        <span class="bd-user__name">{{ current_user.first_name if current_user else 'Maria S.' }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{{ url_for('resident.profile') }}">Profile</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('resident.my_reports') }}">My Reports</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Sign out</a></li>
+      </ul>
+    </div>
+
+  </div>
+</header>
