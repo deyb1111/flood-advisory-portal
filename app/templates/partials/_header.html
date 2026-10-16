@@ -38,7 +38,7 @@
     <div class="bd-user dropdown">
       <button class="bd-user__btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="bd-avatar" aria-hidden="true"></span>
-        <span class="bd-user__name">{{ current_user.first_name if current_user else 'Maria S.' }}</span>
+        <span class="bd-user__name">{{ current_user.full_name.split(' ')[0] if current_user.is_authenticated else 'Maria S.' }}</span>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="{{ url_for('resident.profile') }}">Profile</a></li>

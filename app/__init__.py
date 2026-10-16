@@ -31,6 +31,17 @@ def create_app():
     migrate.init_app(app, db)
     csrf.init_app(app)
 
+    # Flask-Login requires a user_loader; without it every page render fails
+    # because Flask-Login's template context processor looks up current_user.
+    from app.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        try:
+            return db.session.get(User, int(user_id))
+        except (TypeError, ValueError):
+            return None
+
     # Register blueprints (make sure these match your actual files)
     from app.views.public import public_bp
     from app.views.resident import resident_bp

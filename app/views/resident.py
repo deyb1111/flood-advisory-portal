@@ -19,7 +19,7 @@ def report_submitted():
 def my_reports():
     return render_template('resident/my_reports.html', active_page='my_reports')
 
-@resident_bp.route('/my-reports/<int:report_id>')
+@resident_bp.route('/my-reports/<report_id>')
 def report_detail(report_id):
     return render_template('resident/report_detail.html',
                            active_page='my_reports',

@@ -29,7 +29,8 @@
     affected: { cls: 'bd-pin--affected', glyph: '⊟' },
     passable: { cls: 'bd-pin--passable', glyph: '✓' },
     caution:  { cls: 'bd-pin--caution',  glyph: '!' },
-    notpass:  { cls: 'bd-pin--notpass',  glyph: '✕' }
+    notpass:  { cls: 'bd-pin--notpass',  glyph: '✕' },
+    not_passable: { cls: 'bd-pin--notpass', glyph: '✕' }
   };
 
   function makeIcon(kind) {
