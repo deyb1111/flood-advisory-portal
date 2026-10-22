@@ -58,13 +58,15 @@
           {{ r.road.name if r.road else '—' }}<br>
           <span class="bd-ref-sub">{{ current_user.barangay.name }}</span>
         </td>
-        <td>{{ r.created_at.strftime('%-d %b %Y') }}<br><span class="bd-ref-sub">{{ r.created_at.strftime('%-I:%M %p') }} PHT</span></td>
+        <td>
+          {{ r.created_at|dt('%d %b %Y') }}<br>
+          <span class="bd-ref-sub">{{ r.created_at|dt('%I:%M %p') }} PHT</span>
+        </td>
         <td style="max-width:320px;">{{ r.description or '—' }}</td>
         <td>
           {% if r.photo_path %}
-            <a href="{{ url_for('personnel.report_photo', report_id=r.report_id) }}"
-               class="bd-chip" target="_blank" rel="noopener"
-               aria-label="View attached photo for report {{ r.short_ref }}">1</a>
+            <a href="{{ url_for('personnel.report_photo', report_id=r.report_id, filename=r.photo_path.split('/')[-1]) }}"
+               class="bd-chip" target="_blank" rel="noopener">1</a>
           {% else %}<span class="bd-text-muted">—</span>{% endif %}
         </td>
         <td>{{ status_badge(r.status_key) }}</td>

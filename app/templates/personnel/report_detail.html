@@ -32,7 +32,7 @@
         <div><p class="bd-kv__label">Reference</p><p class="bd-kv__value">{{ report.reference }}</p></div>
         <div><p class="bd-kv__label">Report type</p><p class="bd-kv__value">{{ report.report_type_label }}</p></div>
         <div><p class="bd-kv__label">Reported location</p><p class="bd-kv__value">{{ report.road.name if report.road else '—' }}, Barangay {{ current_user.barangay.name }}</p></div>
-        <div><p class="bd-kv__label">Submitted</p><p class="bd-kv__value">{{ report.created_at.strftime('%-d %b %Y · %-I:%M %p PHT') }}</p></div>
+        <div><p class="bd-kv__label">Submitted</p><p class="bd-kv__value">{{ report.created_at|dt('%d %b %Y · %I:%M %p PHT') }}</p></div>
         <div><p class="bd-kv__label">Water level (resident)</p><p class="bd-kv__value">{{ report.water_level|replace('_', ' ')|title if report.water_level else '—' }}</p></div>
         <div><p class="bd-kv__label">Traffic / road</p><p class="bd-kv__value">{{ report.traffic_level|title if report.traffic_level else '—' }}</p></div>
       </div>
@@ -40,7 +40,7 @@
       <p style="font-size:14.5px;">{{ report.description or '—' }}</p>
       {% if report.photo_path %}
       <figure class="bd-attachment">
-        <img src="{{ url_for('personnel.report_photo', report_id=report.report_id) }}"
+        <img src="{{ url_for('personnel.report_photo', report_id=report.report_id, filename=report.photo_path.split('/')[-1]) }}"
              alt="Photograph attached to report {{ report.short_ref }}">
         <figcaption>{{ report.photo_path.split('/')[-1] }}</figcaption>
       </figure>
@@ -98,7 +98,7 @@
           <div>
             <p class="bd-timeline__title">{{ v.decision|title }}</p>
             <p class="bd-timeline__meta">{{ v.remarks or 'No remarks.' }}</p>
-            <p class="bd-timeline__time">{{ v.staff.full_name if v.staff else 'System' }} · {{ v.decided_at.strftime('%-d %b · %-I:%M %p') }}</p>
+            <p class="bd-timeline__time">{{ v.staff.full_name if v.staff else 'System' }} · {{ v.decided_at|dt('%d %b · %I:%M %p') }}</p>
           </div>
         </li>
         {% endfor %}
@@ -168,6 +168,6 @@
 {% endblock %}
 
 {% block personnel_scripts %}
-<script src="{{ url_for('static', filename='js/personnel-reports.js') }}"></script>
+<script src="{{ url_for('static', filename='js/personnel-report.js') }}"></script>
 <script src="{{ url_for('static', filename='js/personnel-map.js') }}"></script>
 {% endblock %}

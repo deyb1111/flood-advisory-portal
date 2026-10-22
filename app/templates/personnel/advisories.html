@@ -54,8 +54,8 @@
         <td>{{ advisory_status_badge(a.status) }}</td>
         <td>
           {% if a.published_at %}
-            {{ a.published_at.strftime('%-d %b · %-I:%M %p') }}<br>
-            <span class="bd-ref-sub">{{ a.published_at.strftime('%Y') }}</span>
+            {{ a.published_at|dt('%d %b · %I:%M %p') }}<br>
+            <span class="bd-ref-sub">{{ a.published_at|dt('%Y') }}</span>
           {% else %}<span class="bd-text-muted">Not published</span>{% endif %}
         </td>
         <td>

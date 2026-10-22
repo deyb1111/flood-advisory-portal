@@ -1,5 +1,9 @@
 {% from 'partials/_macros.html' import badge_verified, badge_pending, badge_rejected, badge_resolved %}
-{% from 'partials/_macros.html' import alert_info, alert_warning, alert_success %}
+{% from 'partials/_macros.html' import alert_info as _alert_info, alert_warning as _alert_warning, alert_success as _alert_success %}
+
+{% macro alert_info(title, text) %}{{ _alert_info(title, text) }}{% endmacro %}
+{% macro alert_warning(title, text) %}{{ _alert_warning(title, text) }}{% endmacro %}
+{% macro alert_success(title, text) %}{{ _alert_success(title, text) }}{% endmacro %}
 
 {% macro demo_banner() %}
 <div class="bd-demo">

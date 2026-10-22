@@ -9,14 +9,12 @@ from datetime import datetime
 from functools import wraps
 
 from flask import (Blueprint, abort, current_app, flash, redirect,
-                   render_template, request, url_for)
+                   render_template, request, send_from_directory, url_for)
 from flask_login import current_user, login_required
+from werkzeug.utils import secure_filename
 
 from app import db
 from app.models import Advisory, ActivityLog, Report, Road, Verification
-
-from flask import current_app, send_from_directory
-from werkzeug.utils import secure_filename
 
 
 bp = Blueprint('personnel', __name__, template_folder='../templates/personnel')
@@ -157,6 +155,9 @@ def report_detail(report_id):
 @personnel_required
 def report_verify(report_id):
     report = _reports_query().filter_by(report_id=report_id).first_or_404()
+    if report.status not in ('pending', 'unverified'):
+        flash(f'Report {report.short_ref} is already {report.status_label}.', 'warning')
+        return redirect(url_for('personnel.report_detail', report_id=report.report_id))
     remarks = (request.form.get('review_notes') or '').strip() or None
     db.session.add(Verification(
         report_id=report.report_id,
@@ -176,6 +177,9 @@ def report_verify(report_id):
 @personnel_required
 def report_reject(report_id):
     report = _reports_query().filter_by(report_id=report_id).first_or_404()
+    if report.status not in ('pending', 'unverified'):
+        flash(f'Report {report.short_ref} is already {report.status_label}.', 'warning')
+        return redirect(url_for('personnel.report_detail', report_id=report.report_id))
     reason = (request.form.get('reason') or '').strip()
     if not reason:
         flash('A rejection reason is required.', 'warning')
@@ -211,7 +215,7 @@ def map():
             'description': r.description or '',
             'water_level': r.water_level,
             'traffic_level': r.traffic_level,
-            'submitted_at': r.created_at.strftime('%-d %b · %-I:%M %p'),
+            'submitted_at': r.created_at.strftime('%d %b · %I:%M %p'),
             'lat': float(r.latitude), 'lng': float(r.longitude),
         } for r in reports],
         demo_mode=_demo_mode(),
@@ -279,6 +283,7 @@ def _advisory_form(adv):
     eligible = (_reports_query().filter_by(status='verified')
         .order_by(Report.created_at.desc()).all())
     streets = _streets()
+    preselected_report_id = request.args.get('report_id') or ''
 
     if request.method == 'POST':
         f = {
@@ -305,7 +310,8 @@ def _advisory_form(adv):
                 streets=streets, eligible_reports=eligible,
                 form_errors=errors, demo_mode=_demo_mode())
 
-        if adv is None:
+        is_new = adv is None
+        if is_new:
             adv = Advisory(barangay_id=current_user.barangay_id,
                            published_by=current_user.user_id,
                            road_id=int(f['road_id']),
@@ -322,6 +328,11 @@ def _advisory_form(adv):
         if intent == 'publish':
             adv.status = 'published'
             adv.published_at = datetime.utcnow()
+
+        # Flush so adv.advisory_id is populated before we log the action.
+        db.session.flush()
+
+        if intent == 'publish':
             _log('Advisory published', 'advisory', adv.advisory_id,
                  f'Published {adv.reference}.')
             db.session.commit()
@@ -340,7 +351,7 @@ def _advisory_form(adv):
         title=adv.title if adv else '',
         message=adv.message if adv else '',
         road_id=str(adv.road_id) if adv else '',
-        report_id=str(adv.report_id) if adv and adv.report_id else '',
+        report_id=str(adv.report_id) if adv and adv.report_id else preselected_report_id,
         road_status=adv.road_status if adv else 'not_passable',
     )
     return render_template('personnel/advisory_compose.html',
@@ -372,7 +383,17 @@ def activity_log():
 def account_settings():
     if request.method == 'POST':
         current_user.full_name = (request.form.get('full_name') or current_user.full_name).strip()
-        current_user.email = (request.form.get('email') or current_user.email).strip()
+        new_email = (request.form.get('email') or current_user.email).strip()
+        if new_email != current_user.email:
+            conflict = (db.session.query(db.func.count())
+                        .select_from(type(current_user))
+                        .filter(type(current_user).email == new_email,
+                                type(current_user).user_id != current_user.user_id)
+                        .scalar())
+            if conflict:
+                flash('That email is already in use.', 'warning')
+                return redirect(url_for('personnel.account_settings'))
+        current_user.email = new_email
         db.session.commit()
         flash('Account changes saved.', 'success')
         return redirect(url_for('personnel.account_settings'))
@@ -394,8 +415,8 @@ def account_password():
         flash('Password updated.', 'success')
     return redirect(url_for('personnel.account_settings'))
 
-#--------------------------------------------------------------- file upload
 
+# ------------------------------------------------------------------ file upload
 @bp.route('/photos/<int:report_id>/<path:filename>')
 @personnel_required
 def report_photo(report_id, filename):
@@ -404,8 +425,8 @@ def report_photo(report_id, filename):
     if not report.photo_path:
         abort(404)
     safe = secure_filename(filename)
+    if safe != secure_filename(report.photo_path.split('/')[-1]):
+        abort(404)
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], safe)
 
-# Alias so `from app.views.personnel import personnel_bp` works, matching
-# the *_bp convention used by public/resident/auth/api blueprints.
 personnel_bp = bp

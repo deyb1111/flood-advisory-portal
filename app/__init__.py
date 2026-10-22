@@ -58,8 +58,6 @@ def create_app():
     def format_datetime(value, format='%d %b %Y'):
         if not value:
             return ''
-        # Strip the '-' modifier for Windows compatibility
-        safe_format = format.replace('%-', '%')
-        return value.strftime(safe_format)
+        return value.strftime(format.replace('%-', '%'))
 
     return app

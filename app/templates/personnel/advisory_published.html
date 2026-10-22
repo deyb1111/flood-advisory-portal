@@ -9,7 +9,7 @@
 
 <div class="mt-3">{{ alert_success('Published successfully — ' ~ advisory.reference,
   'Published by ' ~ (advisory.publisher.full_name if advisory.publisher else current_user.full_name) ~
-  ' · ' ~ advisory.published_at.strftime('%-d %b %Y, %-I:%M %p PHT')) }}</div>
+  ' · ' ~ advisory.published_at|dt('%d %b %Y, %I:%M %p PHT')) }}</div>
 
 <div class="row g-4 mt-1">
   <div class="col-lg-8">
@@ -44,7 +44,7 @@
       <div class="bd-preview-card">
         <div class="bd-preview-card__top">
           <span class="bd-badge bd-badge--verified">✓ Verified advisory</span>
-          <span class="bd-preview-card__notp">{{ advisory.published_at.strftime('%-d %b · %-I:%M %p') }}</span>
+          <span class="bd-preview-card__notp">{{ advisory.published_at|dt('%d %b · %I:%M %p') }}</span>
         </div>
         <h3 class="bd-preview-card__title">{{ advisory.title }}</h3>
         <p class="bd-preview-card__loc">{{ current_user.barangay.name }} · {{ advisory.road.name if advisory.road else '' }}</p>
@@ -59,7 +59,7 @@
     <div class="bd-card mt-4">
       <h2 class="bd-card__title mb-3">Publication record</h2>
       <p class="bd-kv__label">Published</p>
-      <p class="bd-kv__value">{{ advisory.published_at.strftime('%-d %b %Y · %-I:%M %p PHT') }}</p>
+      <p class="bd-kv__value">{{ advisory.published_at|dt('%d %b %Y · %I:%M %p PHT') }}</p>
       <p class="bd-kv__label mt-2">Personnel</p>
       <p class="bd-kv__value">{{ advisory.publisher.full_name if advisory.publisher else '—' }}</p>
       <p class="bd-kv__label mt-2">Source status</p>

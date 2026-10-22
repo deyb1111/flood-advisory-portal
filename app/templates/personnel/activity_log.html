@@ -36,7 +36,10 @@
             <a href="{{ url_for('personnel.advisory_edit', advisory_id=a.record_id) }}">Advisory {{ '%04d'|format(a.record_id) }}</a>
           {% else %}—{% endif %}
         </td>
-        <td>{{ a.created_at.strftime('%-d %b · %-I:%M %p') }}<br><span class="bd-ref-sub">{{ a.created_at.strftime('%Y') }}</span></td>
+        <td>
+          {{ a.created_at|dt('%d %b · %I:%M %p') }}<br>
+          <span class="bd-ref-sub">{{ a.created_at|dt('%Y') }}</span>
+        </td>
         <td>{{ a.details or '' }}</td>
       </tr>
       {% else %}
