@@ -1,0 +1,93 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import status_badge, state_card %}
+{% block title %}Personnel dashboard · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Good afternoon, {{ current_user.full_name.split(' ')[0] }}.</h1>
+<p class="bd-page-sub mb-4">Review community reports and share carefully verified flood and road information.</p>
+
+<div class="bd-page-actions">
+  <a class="bd-btn bd-btn--primary" href="{{ url_for('personnel.reports', status='unverified') }}">Review reports ({{ stats.awaiting_verification }})</a>
+  <a class="bd-btn bd-btn--secondary" href="{{ url_for('personnel.advisory_create') }}">Compose advisory</a>
+</div>
+
+<div class="bd-stat-grid">
+  {% for label, value, note in [
+       ('Total submitted', stats.total_submitted, 'All reports'),
+       ('Awaiting verification', stats.awaiting_verification, 'Unverified reports'),
+       ('Verified reports', stats.verified, 'Reviewed / accepted'),
+       ('Rejected reports', stats.rejected, 'Not accepted'),
+       ('Active advisories', stats.active_advisories, 'Published and unresolved')] %}
+  <div class="bd-stat">
+    <p class="bd-stat__label">{{ label }}</p>
+    <p class="bd-stat__value {% if label == 'Awaiting verification' %}bd-stat__value--amber{% elif label == 'Verified reports' %}bd-stat__value--green{% elif label == 'Rejected reports' %}bd-stat__value--red{% endif %}">{{ value }}</p>
+    <p class="bd-stat__note">{{ note }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-1">Recent community reports</h2>
+      <p class="bd-text-muted mb-3" style="font-size:13px;">Most recent first · {{ current_user.barangay.name }} only</p>
+      {% if recent_reports %}
+        {% for r in recent_reports %}
+        <a class="bd-report-row" href="{{ url_for('personnel.report_detail', report_id=r.report_id) }}">
+          <div class="bd-report-row__meta">
+            <span class="bd-report-row__ref">{{ r.short_ref }}</span>
+            <!-- Fixed strftime here -->
+            <span>{{ r.created_at|dt('%I:%M %p') }}</span>
+            {{ status_badge(r.status_key) }}
+          </div>
+          <div class="bd-report-row__title">{{ r.road.name if r.road else 'Unnamed road' }}</div>
+          <p class="bd-report-row__desc">{{ r.description or '' }}</p>
+          <span class="bd-report-row__link">View report →</span>
+        </a>
+        {% endfor %}
+      {% else %}
+        {{ state_card('No reports yet', 'No resident submissions for your barangay yet. New reports will appear here.') }}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="bd-card h-100 d-flex flex-column">
+      <h2 class="bd-card__title mb-1">Flood &amp; road overview</h2>
+      <p class="bd-text-muted mb-3" style="font-size:13px;">All recent report locations</p>
+      <div class="bd-mini-map" id="mini-map"></div>
+      <div class="mt-3">
+        <a href="{{ url_for('personnel.map') }}" class="bd-btn bd-btn--secondary">Open full map</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bd-card mt-4">
+  <h2 class="bd-card__title mb-3">Recent personnel actions</h2>
+  {% if recent_actions %}
+  <ul class="bd-timeline">
+    {% for a in recent_actions %}
+    <li>
+      <span class="bd-timeline__dot bd-timeline__dot--done">
+        <svg viewBox="0 0 16 16"><path d="M4 8.5l3 3 6-7"/></svg>
+      </span>
+      <div>
+        <p class="bd-timeline__title">{{ a.user.full_name if a.user else 'System' }} · {{ a.action }}</p>
+        <p class="bd-timeline__meta">{{ a.details or '' }}</p>
+        <!-- Fixed strftime here -->
+        <p class="bd-timeline__time">{{ a.created_at|dt('%d %b · %I:%M %p PHT') }}</p>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="bd-text-muted" style="font-size:13px;">No activity recorded yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/personnel-map.js') }}"></script>
+{% endblock %}

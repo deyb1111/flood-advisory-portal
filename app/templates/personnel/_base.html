@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% from 'personnel/_macros.html' import demo_banner %}
+
+{% block header %}
+<header class="bd-header">
+  <div class="container bd-container--wide bd-header__inner">
+    <a class="bd-brand" href="{{ url_for('personnel.dashboard') }}">
+      <span class="bd-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><path d="M4 18c3-4 6-4 9 0s6 4 9 0 4-3 6-1"/><path d="M4 24c3-4 6-4 9 0s6 4 9 0 4-3 6-1"/></svg>
+      </span>
+      <span class="bd-brand__text">
+        <span class="bd-brand__name">Bantay Daan Pasig</span>
+        <span class="bd-brand__sub">Personnel · {{ current_user.barangay.name }}</span>
+      </span>
+    </a>
+
+    <button class="bd-header__toggle" type="button" aria-label="Toggle navigation"
+            data-bs-toggle="collapse" data-bs-target="#bdNav"><span></span><span></span><span></span></button>
+
+    <nav id="bdNav" class="bd-nav collapse">
+      <ul class="bd-nav__list">
+        {% set active = active_nav or '' %}
+        <li><a class="bd-nav__link {% if active == 'dashboard' %}is-active{% endif %}" href="{{ url_for('personnel.dashboard') }}">Dashboard</a></li>
+        <li><a class="bd-nav__link {% if active == 'reports' %}is-active{% endif %}" href="{{ url_for('personnel.reports') }}">Reports</a></li>
+        <li><a class="bd-nav__link {% if active == 'map' %}is-active{% endif %}" href="{{ url_for('personnel.map') }}">Map</a></li>
+        <li><a class="bd-nav__link {% if active == 'advisories' %}is-active{% endif %}" href="{{ url_for('personnel.advisories') }}">Advisories</a></li>
+      </ul>
+    </nav>
+
+    <div class="bd-user dropdown">
+      <button class="bd-user__btn dropdown-toggle" data-bs-toggle="dropdown">
+        <span class="bd-avatar" aria-hidden="true"></span>
+        <span class="bd-user__name">{{ current_user.full_name.split(' ')[0] }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{{ url_for('personnel.account_settings') }}">Account settings</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('personnel.activity_log') }}">Activity log</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Sign out</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block subnav %}
+<div class="bd-subnav">
+  <div class="container bd-container--wide">
+    <div class="bd-subnav__inner">
+      <span class="bd-subnav__title">{{ current_user.barangay.name }}</span>
+      <nav class="bd-subnav__links">
+        <a class="{% if active_nav == 'dashboard' %}is-active{% endif %}" href="{{ url_for('personnel.dashboard') }}">Overview</a>
+        <a class="{% if active_nav == 'advisories' %}is-active{% endif %}" href="{{ url_for('personnel.advisories') }}">Advisory history</a>
+        <a class="{% if active_nav == 'activity' %}is-active{% endif %}" href="{{ url_for('personnel.activity_log') }}">Activity log</a>
+        <a class="{% if active_nav == 'account' %}is-active{% endif %}" href="{{ url_for('personnel.account_settings') }}">Account settings</a>
+      </nav>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container bd-container--wide bd-main-pad">
+  {% if demo_mode %}{{ demo_banner() }}{% endif %}
+  {% block breadcrumb %}{% endblock %}
+  {% block personnel_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/personnel.js') }}"></script>
+{% block personnel_scripts %}{% endblock %}
+{% endblock %}

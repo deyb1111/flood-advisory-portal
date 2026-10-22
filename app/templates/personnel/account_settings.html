@@ -1,0 +1,85 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import alert_info %}
+{% block title %}Account settings · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Account settings</h1>
+<p class="bd-page-sub">Manage your personnel account and basic security preferences.</p>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-3">Personnel profile</h2>
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <span class="bd-avatar" style="width:56px;height:56px;"></span>
+        <div>
+          <p style="font-weight:700;margin:0;">{{ current_user.full_name }}</p>
+          <p class="bd-text-muted" style="margin:0;font-size:13px;">{{ current_user.role|title }} · Barangay {{ current_user.barangay.name }}</p>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('personnel.account_settings') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="bd-form-row">
+          <label class="bd-field">
+            <span class="bd-field__label">Display name</span>
+            <input name="full_name" class="bd-input" value="{{ current_user.full_name }}" />
+          </label>
+          <label class="bd-field">
+            <span class="bd-field__label">Position (assigned)</span>
+            <input class="bd-input" value="{{ current_user.role|title }}" disabled />
+          </label>
+        </div>
+        <p class="bd-kv__label">Assigned barangay — read only</p>
+        <p style="font-weight:600;">Barangay {{ current_user.barangay.name }}</p>
+        <label class="bd-field">
+          <span class="bd-field__label">Account email</span>
+          <input type="email" name="email" class="bd-input" value="{{ current_user.email }}" />
+        </label>
+        <p class="bd-text-muted" style="font-size:12.5px;">Your barangay and role are assigned by the account administrator.</p>
+        <button class="bd-btn bd-btn--primary mt-3" type="submit">Save account changes</button>
+      </form>
+    </div>
+
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-3">Password &amp; security</h2>
+      <form method="post" action="{{ url_for('personnel.account_password') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label class="bd-field">
+          <span class="bd-field__label">Current password</span>
+          <input type="password" name="current_password" class="bd-input" placeholder="Enter current password" />
+        </label>
+        <div class="bd-form-row">
+          <label class="bd-field">
+            <span class="bd-field__label">New password</span>
+            <input type="password" name="new_password" class="bd-input" placeholder="At least 12 characters" />
+          </label>
+          <label class="bd-field">
+            <span class="bd-field__label">Confirm new password</span>
+            <input type="password" name="confirm_password" class="bd-input" placeholder="Re-enter new password" />
+          </label>
+        </div>
+        <button class="bd-btn bd-btn--secondary mt-2" type="submit">Update password</button>
+      </form>
+    </div>
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-3">Account menu</h2>
+      <p class="bd-kv__label">Signed in as</p>
+      <p style="font-weight:600;">{{ current_user.full_name }}</p>
+      <p class="bd-text-muted" style="font-size:13px;">{{ current_user.role|title }} · Barangay {{ current_user.barangay.name }}</p>
+      <a class="bd-btn bd-btn--secondary w-100 mt-2 justify-content-center" href="{{ url_for('personnel.account_settings') }}">Account settings</a>
+      <a class="bd-btn bd-btn--secondary w-100 mt-2 justify-content-center" href="{{ url_for('personnel.activity_log') }}">Activity log</a>
+      <a class="bd-btn bd-btn--secondary w-100 mt-2 justify-content-center" href="{{ url_for('auth.logout') }}">Sign out</a>
+    </div>
+
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-3">Your personnel scope</h2>
+      <p style="font-size:14px;">Review reports and manage advisories for Barangay {{ current_user.barangay.name }} only.</p>
+      <p class="bd-text-muted" style="font-size:13px;">Pilot coverage: Kalawaan, San Joaquin and Bambang. Your assignment does not grant access to other pilot barangays.</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import status_badge, alert_warning, alert_success %}
+{% block title %}Review report {{ report.short_ref }} · Bantay Daan Pasig{% endblock %}
+
+{% block breadcrumb %}
+<nav class="bd-crumbs" style="font-size:13px;color:var(--bd-muted);margin:8px 0 16px;">
+  <a href="{{ url_for('personnel.reports') }}">← Report queue</a>
+  <span style="margin:0 8px;">·</span>
+  <span>{{ stats.awaiting_verification }} awaiting review</span>
+</nav>
+{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Review report {{ report.short_ref }}</h1>
+<p class="bd-page-sub">Check the submission, location and supporting evidence before making a decision.</p>
+
+{% if report.status_key == 'unverified' %}
+  <div class="mt-3">{{ alert_warning('Unverified — awaiting review', 'This community submission has not been accepted. Verify only after checking the evidence. Rejected reports are not accepted and cannot be official sources.') }}</div>
+{% else %}
+  <div class="mt-3">{{ alert_success('Review completed', 'Report ' ~ report.short_ref ~ ' is ' ~ report.status_label ~ '. Verification alone does not publish an advisory.') }}</div>
+{% endif %}
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="bd-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="bd-card__title mb-0">Resident submission</h2>
+        {{ status_badge(report.status_key) }}
+      </div>
+      <div class="bd-kv">
+        <div><p class="bd-kv__label">Reference</p><p class="bd-kv__value">{{ report.reference }}</p></div>
+        <div><p class="bd-kv__label">Report type</p><p class="bd-kv__value">{{ report.report_type_label }}</p></div>
+        <div><p class="bd-kv__label">Reported location</p><p class="bd-kv__value">{{ report.road.name if report.road else '—' }}, Barangay {{ current_user.barangay.name }}</p></div>
+        <div><p class="bd-kv__label">Submitted</p><p class="bd-kv__value">{{ report.created_at.strftime('%-d %b %Y · %-I:%M %p PHT') }}</p></div>
+        <div><p class="bd-kv__label">Water level (resident)</p><p class="bd-kv__value">{{ report.water_level|replace('_', ' ')|title if report.water_level else '—' }}</p></div>
+        <div><p class="bd-kv__label">Traffic / road</p><p class="bd-kv__value">{{ report.traffic_level|title if report.traffic_level else '—' }}</p></div>
+      </div>
+      <p class="bd-kv__label">Full resident description</p>
+      <p style="font-size:14.5px;">{{ report.description or '—' }}</p>
+      {% if report.photo_path %}
+      <figure class="bd-attachment">
+        <img src="{{ url_for('personnel.report_photo', report_id=report.report_id) }}"
+             alt="Photograph attached to report {{ report.short_ref }}">
+        <figcaption>{{ report.photo_path.split('/')[-1] }}</figcaption>
+      </figure>
+      {% endif %}
+    </div>
+
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-3">Reported map location</h2>
+      <div class="bd-detail-map" id="detail-map"
+           data-lat="{{ report.latitude }}" data-lng="{{ report.longitude }}"
+           data-status="{{ report.status_key }}"></div>
+      <p class="bd-text-muted" style="font-size:12.5px;margin-top:8px;">Resident-indicated point · illustrative location, not a measured position.</p>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    {% if report.status_key == 'unverified' %}
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-1">Verification decision</h2>
+      <p class="bd-text-muted mb-3" style="font-size:13px;">Only verification makes this report eligible as a source. An advisory must be composed and published separately.</p>
+      <form id="verify-form" method="post" action="{{ url_for('personnel.report_verify', report_id=report.report_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label class="bd-field__label" for="review-notes">Personnel remarks / notes</label>
+        <textarea id="review-notes" name="review_notes" class="bd-textarea" rows="3" placeholder="Photo and location checked; condition corroborated."></textarea>
+        <div class="bd-verify-actions mt-3">
+          <button type="button" class="bd-btn bd-btn--primary" data-bs-toggle="modal" data-bs-target="#verify-modal">Verify report</button>
+          <button type="button" class="bd-btn bd-btn--danger mt-2" data-bs-toggle="modal" data-bs-target="#reject-modal">Reject report</button>
+        </div>
+        <p class="bd-text-muted" style="font-size:12.5px;margin-top:8px;">Rejection requires a reason in the next step.</p>
+      </form>
+    </div>
+    {% else %}
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-1">Review completed</h2>
+      <p class="bd-text-muted mb-3" style="font-size:13px;">Verification alone does not publish an advisory.</p>
+      {{ status_badge(report.status_key) }}
+      {% if report.status_key == 'verified' %}
+        <a class="bd-btn bd-btn--primary w-100 mt-3 justify-content-center"
+           href="{{ url_for('personnel.advisory_create') }}?report_id={{ report.report_id }}">Create advisory</a>
+      {% endif %}
+      <a class="bd-btn bd-btn--secondary w-100 mt-2 justify-content-center"
+         href="{{ url_for('personnel.reports') }}">Return to queue</a>
+    </div>
+    {% endif %}
+
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-3">Verification history</h2>
+      {% if report.verifications %}
+      <ul class="bd-timeline">
+        {% for v in report.verifications|sort(attribute='decided_at', reverse=True) %}
+        <li>
+          <span class="bd-timeline__dot bd-timeline__dot--{{ 'done' if v.decision == 'verified' else ('current' if v.decision == 'rejected' else '') }}">
+            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none"/></svg>
+          </span>
+          <div>
+            <p class="bd-timeline__title">{{ v.decision|title }}</p>
+            <p class="bd-timeline__meta">{{ v.remarks or 'No remarks.' }}</p>
+            <p class="bd-timeline__time">{{ v.staff.full_name if v.staff else 'System' }} · {{ v.decided_at.strftime('%-d %b · %-I:%M %p') }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="bd-text-muted" style="font-size:13px;">No verification decisions recorded yet.</p>
+      {% endif %}
+    </div>
+
+    {% if next_report %}
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-2">Next in queue</h2>
+      <span class="bd-ref">{{ next_report.short_ref }}</span>
+      <span class="bd-ref-sub">{{ next_report.report_type_label }}</span>
+      <p style="font-weight:600;margin:6px 0;">{{ next_report.road.name if next_report.road else '—' }}</p>
+      {{ status_badge(next_report.status_key) }}
+      <a class="bd-btn bd-btn--quiet mt-2" href="{{ url_for('personnel.report_detail', report_id=next_report.report_id) }}">Open next report →</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if report.status_key == 'unverified' %}
+<div class="modal fade" id="verify-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered bd-modal">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('personnel.report_verify', report_id=report.report_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="review_notes" id="verify-notes-hidden" value="" />
+        <div class="modal-header"><h2 class="modal-title h5">Verify this report?</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <p class="bd-modal__ref">{{ report.reference }}</p>
+          <p class="bd-modal__loc">{{ report.road.name if report.road else '' }} · Barangay {{ current_user.barangay.name }}</p>
+          <p>You are accepting this report after review. It becomes eligible as an advisory source. <strong>No advisory will be published.</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="bd-btn bd-btn--quiet" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="bd-btn bd-btn--primary">Confirm verification</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reject-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered bd-modal">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('personnel.report_reject', report_id=report.report_id) }}" novalidate data-bd-validate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="modal-header"><h2 class="modal-title h5">Reject this report?</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <p class="bd-modal__ref">{{ report.reference }}</p>
+          <p>The report will be marked <strong>Rejected</strong> and cannot be used as an advisory source.</p>
+          <label class="bd-field__label" for="rejection-reason">Rejection reason *</label>
+          <textarea id="rejection-reason" name="reason" class="bd-textarea" rows="3" required aria-describedby="rejection-reason-error"></textarea>
+          <span id="rejection-reason-error" class="bd-field__error" hidden>Enter a reason for rejection.</span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="bd-btn bd-btn--quiet" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="bd-btn bd-btn--danger">Reject report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/personnel-reports.js') }}"></script>
+<script src="{{ url_for('static', filename='js/personnel-map.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import advisory_status_badge, state_card, alert_info %}
+{% block title %}Advisory history · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<div class="bd-page-head--row">
+  <div>
+    <p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+    <h1 class="bd-page-title">Advisory history</h1>
+    <p class="bd-page-sub">Manage drafts, current published updates and outdated archived information.</p>
+  </div>
+  <a class="bd-btn bd-btn--primary" href="{{ url_for('personnel.advisory_create') }}">Compose advisory</a>
+</div>
+
+<div class="mt-3">
+  {{ alert_info('Current workspace status',
+    stats.published ~ ' current published advisories · ' ~ stats.drafts ~ ' draft · ' ~ stats.archived ~ ' archived. Only Published advisories are resident-visible as current information.') }}
+</div>
+
+<form class="bd-filter-card" method="get" action="{{ url_for('personnel.advisories') }}">
+  <label class="bd-field__label" for="adv-q">Search advisories</label>
+  <input id="adv-q" name="q" class="bd-input" type="search"
+         placeholder="Search title, street or advisory reference" value="{{ filters.q or '' }}" />
+  <div class="bd-filter-chips mt-2">
+    <select class="bd-select bd-chip-select" name="status">
+      <option value="">Status: All</option>
+      <option value="draft" {{ 'selected' if filters.status == 'draft' }}>Draft</option>
+      <option value="published" {{ 'selected' if filters.status == 'published' }}>Published</option>
+      <option value="archived" {{ 'selected' if filters.status == 'archived' }}>Archived</option>
+    </select>
+    <button type="submit" class="bd-btn bd-btn--primary">Apply</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="bd-table">
+    <thead>
+      <tr>
+        <th>Title / location</th>
+        <th>Status</th>
+        <th>Publication (PHT)</th>
+        <th>Source report</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in advisories %}
+      <tr>
+        <td>
+          <span class="bd-ref">{{ a.reference }}</span>
+          <span class="bd-ref-sub" style="display:block;margin-top:4px;font-weight:600;color:var(--bd-ink);">{{ a.title }}</span>
+          <span class="bd-ref-sub">{{ a.road.name if a.road else '—' }} · {{ current_user.barangay.name }}{% if a.status == 'archived' %} · OUTDATED{% endif %}</span>
+        </td>
+        <td>{{ advisory_status_badge(a.status) }}</td>
+        <td>
+          {% if a.published_at %}
+            {{ a.published_at.strftime('%-d %b · %-I:%M %p') }}<br>
+            <span class="bd-ref-sub">{{ a.published_at.strftime('%Y') }}</span>
+          {% else %}<span class="bd-text-muted">Not published</span>{% endif %}
+        </td>
+        <td>
+          {% if a.report %}
+            <a href="{{ url_for('personnel.report_detail', report_id=a.report.report_id) }}">{{ a.report.short_ref }}</a>
+            <span class="bd-ref-sub" style="display:block;">· Verified</span>
+          {% else %}—{% endif %}
+        </td>
+        <td class="bd-text-right">
+          <a href="{{ url_for('personnel.advisory_edit', advisory_id=a.advisory_id) }}">
+            {% if a.status == 'draft' %}View / Edit draft{% elif a.status == 'published' %}View / Edit / Archive{% else %}View archived{% endif %}
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">{{ state_card('No advisories yet', 'Compose an advisory after reviewing an eligible verified report.') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="bd-card mt-4">
+  <h2 class="bd-card__title mb-2">Keep resident information current</h2>
+  <p style="font-size:14px;">Review published advisories when new verified observations arrive. Edit a current advisory to clarify information, or archive it when conditions are no longer current. Archived entries are clearly marked as outdated.</p>
+</div>
+{% endblock %}

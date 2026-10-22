@@ -1,0 +1,39 @@
+{% from 'partials/_macros.html' import badge_verified, badge_pending, badge_rejected, badge_resolved %}
+{% from 'partials/_macros.html' import alert_info, alert_warning, alert_success %}
+
+{% macro demo_banner() %}
+<div class="bd-demo">
+  <span class="bd-demo__icon">
+    <svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v5M10 6.4v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  </span>
+  <div>
+    <strong>Sample workspace — not actual system data</strong><br>
+    <span>Demo records · Assigned barangay: {{ current_user.barangay.name }} only.</span>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro status_badge(status) %}
+  {% if status == 'verified' %}{{ badge_verified() }}
+  {% elif status in ('pending', 'unverified') %}{{ badge_pending() }}
+  {% elif status == 'rejected' %}{{ badge_rejected() }}
+  {% else %}<span class="bd-chip">{{ status|title }}</span>{% endif %}
+{% endmacro %}
+
+{% macro advisory_status_badge(status) %}
+  {% if status == 'published' %}{{ badge_verified() }}
+  {% elif status == 'draft' %}<span class="bd-chip">Draft</span>
+  {% elif status == 'archived' %}{{ badge_resolved() }}
+  {% else %}<span class="bd-chip">{{ status|title }}</span>{% endif %}
+{% endmacro %}
+
+{% macro state_card(title, text, action_href=None, action_label=None) %}
+<div class="bd-state">
+  <div class="bd-state__icon">
+    <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h6"/></svg>
+  </div>
+  <p class="bd-state__title">{{ title }}</p>
+  <p class="bd-state__text">{{ text }}</p>
+  {% if action_href %}<a class="bd-btn bd-btn--secondary mt-3" href="{{ action_href }}">{{ action_label }}</a>{% endif %}
+</div>
+{% endmacro %}

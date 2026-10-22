@@ -1,0 +1,48 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import state_card %}
+{% block title %}Activity log · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Activity log</h1>
+<p class="bd-page-sub">A simple record of report review and advisory actions within {{ current_user.barangay.name }}.</p>
+
+<form class="bd-filter-card mt-3" method="get" action="{{ url_for('personnel.activity_log') }}">
+  <label class="bd-field__label" for="act-q">Search activity</label>
+  <input id="act-q" name="q" class="bd-input" type="search"
+         placeholder="Search personnel, action or details" value="{{ filters.q or '' }}" />
+</form>
+
+<div class="table-responsive">
+  <table class="bd-table">
+    <thead>
+      <tr>
+        <th>Personnel</th>
+        <th>Action</th>
+        <th>Related record</th>
+        <th>Timestamp (PHT)</th>
+        <th>Details / remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in activities %}
+      <tr>
+        <td>{{ a.user.full_name if a.user else 'System' }}</td>
+        <td>{{ a.action }}</td>
+        <td>
+          {% if a.record_type == 'report' and a.record_id %}
+            <a href="{{ url_for('personnel.report_detail', report_id=a.record_id) }}">Report {{ '%04d'|format(a.record_id) }}</a>
+          {% elif a.record_type == 'advisory' and a.record_id %}
+            <a href="{{ url_for('personnel.advisory_edit', advisory_id=a.record_id) }}">Advisory {{ '%04d'|format(a.record_id) }}</a>
+          {% else %}—{% endif %}
+        </td>
+        <td>{{ a.created_at.strftime('%-d %b · %-I:%M %p') }}<br><span class="bd-ref-sub">{{ a.created_at.strftime('%Y') }}</span></td>
+        <td>{{ a.details or '' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">{{ state_card('No activity yet', 'Report review and advisory actions will appear here.') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

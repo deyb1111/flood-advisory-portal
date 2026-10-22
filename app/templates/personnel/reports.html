@@ -1,0 +1,96 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import status_badge, state_card %}
+{% block title %}Reports · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Report management</h1>
+<p class="bd-page-sub">Search and review resident submissions within {{ current_user.barangay.name }}.</p>
+
+<form class="bd-filter-card" method="get" action="{{ url_for('personnel.reports') }}">
+  <label class="bd-field__label" for="q">Search reports</label>
+  <input id="q" name="q" class="bd-input" type="search"
+         placeholder="Search reference, street or description"
+         value="{{ filters.q or '' }}" autocomplete="off" />
+  <div class="bd-filter-chips mt-2">
+    <select class="bd-select bd-chip-select" name="type">
+      <option value="">Type: All</option>
+      <option value="flood" {{ 'selected' if filters.type == 'flood' }}>Flood</option>
+      <option value="traffic" {{ 'selected' if filters.type == 'traffic' }}>Road / traffic</option>
+    </select>
+    <select class="bd-select bd-chip-select" name="status">
+      <option value="">Status: All</option>
+      <option value="unverified" {{ 'selected' if filters.status == 'unverified' }}>Unverified</option>
+      <option value="verified" {{ 'selected' if filters.status == 'verified' }}>Verified</option>
+      <option value="rejected" {{ 'selected' if filters.status == 'rejected' }}>Rejected</option>
+    </select>
+    <button type="submit" class="bd-btn bd-btn--primary">Apply</button>
+    <a href="{{ url_for('personnel.reports') }}" class="bd-btn bd-btn--quiet">Reset filters</a>
+  </div>
+</form>
+
+<div class="bd-table-head-row">
+  <span><strong>{{ pagination.total }}</strong> reports · newest first</span>
+  <span>{{ stats.awaiting_verification }} awaiting review</span>
+</div>
+
+<div class="table-responsive">
+  <table class="bd-table">
+    <thead>
+      <tr>
+        <th>Reference / type</th>
+        <th>Street / location</th>
+        <th>Submitted</th>
+        <th>Resident description</th>
+        <th>Photo</th>
+        <th>Status</th>
+        <th class="text-end">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td>
+          <span class="bd-ref">{{ r.reference }}</span>
+          <span class="bd-ref-sub">{{ r.report_type_label }}</span>
+        </td>
+        <td>
+          {{ r.road.name if r.road else '—' }}<br>
+          <span class="bd-ref-sub">{{ current_user.barangay.name }}</span>
+        </td>
+        <td>{{ r.created_at.strftime('%-d %b %Y') }}<br><span class="bd-ref-sub">{{ r.created_at.strftime('%-I:%M %p') }} PHT</span></td>
+        <td style="max-width:320px;">{{ r.description or '—' }}</td>
+        <td>
+          {% if r.photo_path %}
+            <a href="{{ url_for('personnel.report_photo', report_id=r.report_id) }}"
+               class="bd-chip" target="_blank" rel="noopener"
+               aria-label="View attached photo for report {{ r.short_ref }}">1</a>
+          {% else %}<span class="bd-text-muted">—</span>{% endif %}
+        </td>
+        <td>{{ status_badge(r.status_key) }}</td>
+        <td class="bd-text-right">
+          <a href="{{ url_for('personnel.report_detail', report_id=r.report_id) }}">View details →</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">{{ state_card('No reports match', 'Try clearing a filter or wait for new submissions.') }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="bd-paginate">
+  <span class="bd-text-muted" style="font-size:13px;">Showing {{ pagination.start }}–{{ pagination.end }} of {{ pagination.total }} · {{ pagination.per_page }} per page</span>
+  <nav>
+    {% if pagination.has_prev %}<a class="bd-btn bd-btn--secondary" href="{{ pagination.prev_url }}">Previous</a>{% endif %}
+    {% for p in pagination.pages %}
+      <a class="bd-btn {% if p == pagination.page %}bd-btn--primary{% else %}bd-btn--secondary{% endif %}" href="{{ pagination.url_for(p) }}">{{ p }}</a>
+    {% endfor %}
+    {% if pagination.has_next %}<a class="bd-btn bd-btn--secondary" href="{{ pagination.next_url }}">Next</a>{% endif %}
+  </nav>
+</div>
+
+<p class="bd-text-muted" style="font-size:12.5px;margin-top:16px;">
+  Unverified = awaiting review · Verified = reviewed and accepted · Rejected = not accepted. Verification does not publish an advisory.
+</p>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import status_badge %}
+{% block title %}Flood &amp; road map · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Flood &amp; road map</h1>
+<p class="bd-page-sub">Assigned barangay: {{ current_user.barangay.name }} · Community observations for personnel review.</p>
+
+<div class="bd-filter-card mt-3">
+  <label class="bd-field__label" for="map-q">Search assigned streets</label>
+  <input id="map-q" class="bd-input" type="search" placeholder="Search street or landmark" />
+  <div class="bd-filter-chips mt-2">
+    <select class="bd-select bd-chip-select" id="map-status">
+      <option value="">Status: Verified + Unverified</option>
+      <option value="verified">Verified only</option>
+      <option value="unverified">Unverified only</option>
+    </select>
+    <select class="bd-select bd-chip-select" id="map-type">
+      <option value="">Type: All</option>
+      <option value="flood">Flood</option>
+      <option value="traffic">Road / traffic</option>
+    </select>
+    <select class="bd-select bd-chip-select" id="map-rejected">
+      <option value="off">Rejected history: Off</option>
+      <option value="on">Rejected history: On</option>
+    </select>
+  </div>
+</div>
+
+<div class="bd-map-layout">
+  <div class="bd-map-canvas-wrap">
+    <div id="map" data-reports='{{ map_reports|tojson }}'></div>
+    <div class="bd-map-legend">
+      <span class="bd-map-legend__item"><span class="bd-legend-dot bd-legend-dot--verified"></span> Verified</span>
+      <span class="bd-map-legend__item"><span class="bd-legend-dot bd-legend-dot--unverified"></span> Unverified</span>
+      <span class="bd-map-legend__item"><span class="bd-legend-dot bd-legend-dot--rejected"></span> Rejected</span>
+    </div>
+  </div>
+  <aside class="bd-map-detail" id="map-detail">
+    <p class="bd-text-muted" style="font-size:13px;">Select a marker to see details.</p>
+  </aside>
+</div>
+
+<div class="bd-card mt-4">
+  <h2 class="bd-card__title mb-2">Visible reports</h2>
+  <p class="bd-text-muted mb-3" style="font-size:13px;">{{ map_reports|length }} locations · Rejected hidden by default.</p>
+  <ul class="bd-map-list">
+    {% for r in map_reports %}
+    <li data-map-target="{{ r.id }}">
+      <span class="bd-map-list__ref">{{ r.reference }}</span>
+      <span class="bd-map-list__street">{{ r.street }}</span>
+      <span class="bd-map-list__time">{{ r.submitted_at }}</span>
+      {{ status_badge(r.status) }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/personnel-map.js') }}"></script>
+{% endblock %}

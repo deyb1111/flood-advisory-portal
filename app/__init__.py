@@ -6,33 +6,32 @@ from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 
-# Load environment variables from .env
 load_dotenv()
 
-# Create the extension objects globally
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 csrf = CSRFProtect()
 
+
 def create_app():
     app = Flask(__name__)
-    
-    # Configuration
+
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
     app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 8388608))
+    app.config.setdefault('PERSONNEL_DEMO', False)
 
-    # Initialize extensions with the app  <--- THIS IS THE CRITICAL PART
-    db.init_app(app)          # <--- Make sure this line is here!
+    db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    # Flask-Login requires a user_loader; without it every page render fails
-    # because Flask-Login's template context processor looks up current_user.
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please sign in to continue.'
+
     from app.models import User
 
     @login_manager.user_loader
@@ -42,15 +41,25 @@ def create_app():
         except (TypeError, ValueError):
             return None
 
-    # Register blueprints (make sure these match your actual files)
     from app.views.public import public_bp
     from app.views.resident import resident_bp
     from app.views.auth import auth_bp
     from app.views.api import api_bp
+    from app.views.personnel import personnel_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(resident_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(personnel_bp, url_prefix='/personnel')
+
+       # Fix for Windows strftime (Windows doesn't support %-d or %-I)
+    @app.template_filter('dt')
+    def format_datetime(value, format='%d %b %Y'):
+        if not value:
+            return ''
+        # Strip the '-' modifier for Windows compatibility
+        safe_format = format.replace('%-', '%')
+        return value.strftime(safe_format)
 
     return app

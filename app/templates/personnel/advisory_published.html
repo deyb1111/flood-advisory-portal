@@ -1,0 +1,89 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import advisory_status_badge, alert_success, alert_info %}
+{% block title %}Advisory published · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Advisory published</h1>
+<p class="bd-page-sub">Your barangay update is now visible to residents as an official advisory.</p>
+
+<div class="mt-3">{{ alert_success('Published successfully — ' ~ advisory.reference,
+  'Published by ' ~ (advisory.publisher.full_name if advisory.publisher else current_user.full_name) ~
+  ' · ' ~ advisory.published_at.strftime('%-d %b %Y, %-I:%M %p PHT')) }}</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="bd-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="bd-card__title mb-0">Published content</h2>
+        {{ advisory_status_badge(advisory.status) }}
+      </div>
+      <p class="bd-ref mb-1">{{ advisory.reference }}</p>
+      <p class="bd-kv__label">Title</p>
+      <p style="font-weight:600;">{{ advisory.title }}</p>
+      <p class="bd-kv__label">Description</p>
+      <p style="font-size:14.5px;">{{ advisory.message }}</p>
+      <div class="bd-kv">
+        <div><p class="bd-kv__label">Street / barangay</p><p class="bd-kv__value">{{ advisory.road.name if advisory.road else '—' }} · {{ current_user.barangay.name }}</p></div>
+        <div><p class="bd-kv__label">Road status</p><p class="bd-kv__value">{{ advisory.road_status|replace('_',' ')|title }}</p></div>
+        <div><p class="bd-kv__label">Source report</p><p class="bd-kv__value">{{ advisory.report.short_ref if advisory.report else '—' }}</p></div>
+      </div>
+    </div>
+
+    <div class="bd-page-actions mt-4">
+      <a class="bd-btn bd-btn--primary" href="{{ url_for('personnel.advisory_edit', advisory_id=advisory.advisory_id) }}">Edit advisory</a>
+      <button class="bd-btn bd-btn--danger" type="button" data-bs-toggle="modal" data-bs-target="#archive-modal">Archive advisory</button>
+      <a class="bd-btn bd-btn--secondary" href="{{ url_for('personnel.advisories') }}">Advisory history</a>
+    </div>
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="bd-card">
+      <h2 class="bd-card__title mb-1">Resident-facing preview</h2>
+      <p class="bd-text-muted mb-3" style="font-size:12.5px;">Published card</p>
+      <div class="bd-preview-card">
+        <div class="bd-preview-card__top">
+          <span class="bd-badge bd-badge--verified">✓ Verified advisory</span>
+          <span class="bd-preview-card__notp">{{ advisory.published_at.strftime('%-d %b · %-I:%M %p') }}</span>
+        </div>
+        <h3 class="bd-preview-card__title">{{ advisory.title }}</h3>
+        <p class="bd-preview-card__loc">{{ current_user.barangay.name }} · {{ advisory.road.name if advisory.road else '' }}</p>
+        <div class="bd-preview-card__chips">
+          <span class="bd-pill bd-pill--{{ advisory.road_status|replace('_','-') }}">{{ advisory.road_status|replace('_',' ')|title }}</span>
+          <span class="bd-chip">Flood reported</span>
+        </div>
+        <p class="bd-preview-card__desc">{{ advisory.message }}</p>
+      </div>
+    </div>
+
+    <div class="bd-card mt-4">
+      <h2 class="bd-card__title mb-3">Publication record</h2>
+      <p class="bd-kv__label">Published</p>
+      <p class="bd-kv__value">{{ advisory.published_at.strftime('%-d %b %Y · %-I:%M %p PHT') }}</p>
+      <p class="bd-kv__label mt-2">Personnel</p>
+      <p class="bd-kv__value">{{ advisory.publisher.full_name if advisory.publisher else '—' }}</p>
+      <p class="bd-kv__label mt-2">Source status</p>
+      <p class="bd-kv__value">{{ advisory.report.short_ref if advisory.report else '—' }} · Verified / accepted</p>
+    </div>
+
+    <div class="mt-3">{{ alert_info('Community information, carefully verified',
+      'Near-real-time community observations, not continuous monitoring. This portal complements existing emergency channels.') }}</div>
+  </aside>
+</div>
+
+<div class="modal fade" id="archive-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered bd-modal">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('personnel.advisory_archive', advisory_id=advisory.advisory_id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="modal-header"><h2 class="modal-title h5">Archive this advisory?</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p>Archived advisories are marked outdated and are no longer shown as current. The record remains in advisory history.</p></div>
+        <div class="modal-footer">
+          <button type="button" class="bd-btn bd-btn--quiet" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="bd-btn bd-btn--danger">Archive advisory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

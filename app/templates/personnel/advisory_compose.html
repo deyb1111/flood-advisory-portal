@@ -1,0 +1,160 @@
+{% extends 'personnel/_base.html' %}
+{% from 'personnel/_macros.html' import alert_info, alert_warning %}
+{% block title %}Compose an advisory · Bantay Daan Pasig{% endblock %}
+
+{% block personnel_content %}
+<p class="bd-eyebrow">Barangay personnel · {{ current_user.barangay.name }}</p>
+<h1 class="bd-page-title">Compose an advisory</h1>
+<p class="bd-page-sub">Prepare a clear resident-facing update from an appropriately verified report.</p>
+
+{% if form_errors %}
+  <div class="mt-3">{{ alert_warning('Check ' ~ form_errors|length ~ ' required fields before publishing',
+    'Add the highlighted values. Your other inputs are preserved. Nothing has been published.') }}</div>
+{% else %}
+  <div class="mt-3">{{ alert_info('Draft only — not visible to residents',
+    'Save your work first, or publish through a separate confirmation dialog. Only verified reports can be official sources.') }}</div>
+{% endif %}
+
+<form id="advisory-form" method="post" novalidate
+      action="{{ url_for('personnel.advisory_edit', advisory_id=advisory.advisory_id) if advisory else url_for('personnel.advisory_create') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="bd-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="bd-card__title mb-0">Advisory details</h2>
+          {% if advisory %}<span class="bd-ref">{{ advisory.reference }}</span>{% endif %}
+        </div>
+
+        <label class="bd-field__label" for="adv-title">Advisory title *</label>
+        <input id="adv-title" name="title" class="bd-input {{ 'is-invalid' if form_errors and form_errors.title }}"
+               value="{{ form.title }}" placeholder="Enter a clear advisory title" data-preview-target="title" />
+        {% if form_errors and form_errors.title %}<span class="bd-field__error">{{ form_errors.title }}</span>{% endif %}
+
+        <label class="bd-field__label mt-3" for="adv-message">Description *</label>
+        <textarea id="adv-message" name="message" rows="3"
+                  class="bd-textarea {{ 'is-invalid' if form_errors and form_errors.message }}"
+                  placeholder="Describe current conditions and travel impact"
+                  data-preview-target="message">{{ form.message }}</textarea>
+        {% if form_errors and form_errors.message %}<span class="bd-field__error">{{ form_errors.message }}</span>{% endif %}
+
+        <label class="bd-field__label mt-3" for="adv-road">Street / location *</label>
+        <select id="adv-road" name="road_id"
+                class="bd-select {{ 'is-invalid' if form_errors and form_errors.road_id }}"
+                data-preview-target="street">
+          <option value="">Choose a street</option>
+          {% for road_id, road_name in streets %}
+          <option value="{{ road_id }}"
+                  {% if form.road_id and form.road_id|string == road_id|string %}selected{% endif %}>
+            {{ road_name }}
+          </option>
+          {% endfor %}
+        </select>
+        {% if form_errors and form_errors.road_id %}<span class="bd-field__error">{{ form_errors.road_id }}</span>{% endif %}
+        <p class="bd-text-muted" style="font-size:12.5px;margin-top:6px;">
+          Assigned barangay: {{ current_user.barangay.name }} · fixed to your assignment
+        </p>
+
+        <label class="bd-field__label" for="adv-source">Related verified report *</label>
+        <select id="adv-source" name="report_id"
+                class="bd-select {{ 'is-invalid' if form_errors and form_errors.report_id }}"
+                data-preview-target="source">
+          <option value="">Choose a verified report</option>
+          {% for r in eligible_reports %}
+          <option value="{{ r.report_id }}" {% if form.report_id and form.report_id|string == r.report_id|string %}selected{% endif %}>
+            {{ r.short_ref }} · {{ r.road.name if r.road else '—' }} · Verified
+          </option>
+          {% endfor %}
+        </select>
+        {% if form_errors and form_errors.report_id %}<span class="bd-field__error">{{ form_errors.report_id }}</span>{% endif %}
+        <p class="bd-text-muted" style="font-size:12.5px;margin-top:6px;">
+          Only verified reports are eligible. Unverified and rejected reports cannot be used as advisory sources.
+        </p>
+      </div>
+
+      <div class="bd-card mt-4">
+        <h2 class="bd-card__title mb-3">Road condition</h2>
+        <label class="bd-field__label" for="adv-status">Road status *</label>
+        <select id="adv-status" name="road_status" class="bd-select" data-preview-target="road">
+          <option value="passable" {{ 'selected' if form.road_status == 'passable' }}>Passable</option>
+          <option value="caution" {{ 'selected' if form.road_status == 'caution' }}>Difficult to pass</option>
+          <option value="not_passable" {{ 'selected' if form.road_status == 'not_passable' }}>Not passable</option>
+        </select>
+        <p class="bd-text-muted" style="font-size:12.5px;margin-top:12px;">
+          Condition observed in the source report. Review currency before publication.
+        </p>
+      </div>
+
+      <div class="bd-page-actions mt-4">
+        <button type="submit" name="intent" value="draft" class="bd-btn bd-btn--secondary">Save draft</button>
+        <button type="button" class="bd-btn bd-btn--primary" data-bs-toggle="modal" data-bs-target="#publish-modal">Publish advisory</button>
+        <a class="bd-btn bd-btn--quiet" href="{{ url_for('personnel.advisories') }}">Cancel</a>
+      </div>
+    </div>
+
+    <aside class="col-lg-4">
+      <div class="bd-card">
+        <h2 class="bd-card__title mb-1">Resident-facing preview</h2>
+        <p class="bd-text-muted mb-3" style="font-size:12.5px;">Preview only · Draft is not resident-visible</p>
+        <div class="bd-preview-card">
+          <div class="bd-preview-card__top">
+            <span class="bd-badge bd-badge--verified">✓ Verified advisory</span>
+            <span class="bd-preview-card__notp">Not published</span>
+          </div>
+          <h3 class="bd-preview-card__title" data-preview-title>Advisory title</h3>
+          <p class="bd-preview-card__loc">{{ current_user.barangay.name }} · <span data-preview-street>A. Sandoval Ave</span></p>
+          <div class="bd-preview-card__chips">
+            <span class="bd-pill bd-pill--not-passable" data-preview-road>Not passable</span>
+            <span class="bd-chip">Flood reported</span>
+          </div>
+          <p class="bd-preview-card__desc" data-preview-message>Add a description to complete this preview.</p>
+          <div class="bd-preview-card__actions">
+            <a class="bd-btn bd-btn--secondary" href="{{ url_for('public.map') }}">View on Map</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="bd-card mt-4">
+        <h2 class="bd-card__title mb-3">Publication checklist</h2>
+        <ul class="bd-checklist">
+          <li class="is-done">Assigned street in {{ current_user.barangay.name }}</li>
+          <li class="is-pending" data-check-road>Road condition selected</li>
+          <li class="is-pending" data-check-source>Accepted, verified source report</li>
+          <li class="is-pending">Confirm publication in the next step</li>
+        </ul>
+      </div>
+
+      <div class="mt-3">{{ alert_info('Community information, carefully verified',
+        'Near-real-time community observations, not continuous monitoring. This portal complements existing emergency channels.') }}</div>
+    </aside>
+  </div>
+</form>
+
+<div class="modal fade" id="publish-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered bd-modal">
+    <div class="modal-content">
+      <form method="post"
+            action="{{ url_for('personnel.advisory_edit', advisory_id=advisory.advisory_id) if advisory else url_for('personnel.advisory_create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="intent" value="publish" />
+        <div id="publish-mirror" hidden></div>
+        <div class="modal-header"><h2 class="modal-title h5">Publish this advisory?</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <p class="bd-modal__ref" data-preview-title>Advisory title</p>
+          <p class="bd-modal__loc" data-preview-street>A. Sandoval Ave</p>
+          <p data-preview-message>Advisory description.</p>
+          <p><strong>This deliberate action makes the advisory visible to residents.</strong> Report verification alone does not publish it.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="bd-btn bd-btn--quiet" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="bd-btn bd-btn--primary">Confirm publication</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/personnel-advisory.js') }}"></script>
+{% endblock %}
