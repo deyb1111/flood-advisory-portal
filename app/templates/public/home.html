@@ -35,13 +35,14 @@
   <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
     <span class="bd-text-muted" style="font-size:13px;">Show summary for</span>
     <div class="bd-filter-row">
-      <button class="bd-filter is-active" type="button">All 3 barangays</button>
-      <button class="bd-filter" type="button">Kalawaan <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
-      <button class="bd-filter" type="button">San Joaquin <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
-      <button class="bd-filter" type="button">Bambang <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+      <button class="bd-filter is-active" type="button" data-summary-filter="all" aria-pressed="true">All 3 barangays</button>
+      <button class="bd-filter" type="button" data-summary-filter="kalawaan" aria-pressed="false">Kalawaan <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+      <button class="bd-filter" type="button" data-summary-filter="san-joaquin" aria-pressed="false">San Joaquin <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
+      <button class="bd-filter" type="button" data-summary-filter="bambang" aria-pressed="false">Bambang <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
     </div>
     <span class="ms-auto bd-text-muted" style="font-size:12.5px;" data-poll="last-updated">Last refreshed today, 3:42 PM</span>
   </div>
+  <p class="bd-summary-status" data-summary-status aria-live="polite">Showing the combined summary for all three barangays.</p>
 
   {# ---------- Stat cards ---------- #}
   <div class="bd-stats-row">
@@ -84,7 +85,7 @@
           </a>
         </div>
 
-        <div class="bd-affected-row">
+        <div class="bd-affected-row" data-barangay="san-joaquin">
           <div class="bd-affected-row__mark bd-affected-row__mark--red">
             <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
           </div>
@@ -96,7 +97,7 @@
           <span class="bd-affected-row__time">3:36 PM</span>
         </div>
 
-        <div class="bd-affected-row">
+        <div class="bd-affected-row" data-barangay="kalawaan">
           <div class="bd-affected-row__mark bd-affected-row__mark--amber">
             <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
           </div>
@@ -108,7 +109,7 @@
           <span class="bd-affected-row__time">3:21 PM</span>
         </div>
 
-        <div class="bd-affected-row">
+        <div class="bd-affected-row" data-barangay="bambang">
           <div class="bd-affected-row__mark bd-affected-row__mark--amber">
             <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
           </div>
@@ -124,15 +125,15 @@
 
     {# Recent verified advisories #}
     <div class="col-lg-5">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
+      <div class="bd-home-advisory-heading d-flex justify-content-between align-items-start mb-3">
+        <div class="bd-home-advisory-heading__copy">
           <h2 class="bd-card__title mb-1">Recent verified advisories</h2>
           <p class="bd-text-muted mb-0" style="font-size:12.5px;">Most recently updated first</p>
         </div>
         <a href="{{ url_for('public.advisories') }}" class="bd-btn bd-btn--quiet">See all</a>
       </div>
 
-      <article class="bd-advisory-card mb-3" data-poll="advisory">
+      <article class="bd-advisory-card mb-3" data-poll="advisory" data-barangay="san-joaquin">
         <div class="bd-advisory-card__top">
           {{ badge_verified() }}
           <span class="bd-advisory-card__time">Updated 6 min ago</span>
@@ -152,7 +153,7 @@
         </div>
       </article>
 
-      <article class="bd-advisory-card" data-poll="advisory">
+      <article class="bd-advisory-card" data-poll="advisory" data-barangay="kalawaan">
         <div class="bd-advisory-card__top">
           {{ badge_verified() }}
           <span class="bd-advisory-card__time">Updated 21 min ago</span>
@@ -176,4 +177,7 @@
 </div>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='js/polling.js') }}"></script>{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/polling.js') }}"></script>
+<script src="{{ url_for('static', filename='js/home-summary.js') }}"></script>
+{% endblock %}
