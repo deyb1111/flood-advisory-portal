@@ -685,3 +685,43 @@ body.bd-map-page .bd-header{ position: relative; }
 .bd-modal .modal-footer { border-top: 0; padding: 8px 24px 20px; }
 .bd-modal__ref { color: var(--bd-blue); font-weight: 600; margin-bottom: 2px; }
 .bd-modal__loc { color: var(--bd-muted); font-size: 13px; margin-bottom: 12px; }
+
+/* ============================================================
+   Global cursor behavior
+   Prevent the I-beam mouse cursor from appearing over ordinary
+   page content while preserving expected interactive cursors.
+   ============================================================ */
+body,
+body * {
+  cursor: default;
+}
+
+a,
+button,
+[role="button"],
+summary,
+label[for],
+select,
+.bd-btn,
+.bd-nav__link,
+.bd-subnav__links a,
+.bd-header__toggle,
+.bd-user__btn,
+.bd-map-list li {
+  cursor: pointer;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
