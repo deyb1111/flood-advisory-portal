@@ -76,14 +76,10 @@
         </label>
         <label class="bd-field">
           <span class="bd-field__label">Street / road *</span>
-          <select class="bd-select" name="road_id" required>
-            <option value="">Select a road</option>
-            <option>A. Sandoval Avenue</option>
-            <option>Lopez Jaena Street</option>
-            <option>F. Mariano Avenue</option>
-            <option>M. Concepcion Avenue</option>
-            <option>Ilaya Street</option>
+          <select class="bd-select" id="road-select" name="road_name" required>
+            <option value="">Select a barangay first</option>
           </select>
+          <span class="bd-field__help">Choose a listed street or select “Other” to enter a specific street.</span>
         </label>
       </div>
 
@@ -96,6 +92,11 @@
       </div>
       <input type="hidden" name="latitude" id="input-lat" value="14.5764" />
       <input type="hidden" name="longitude" id="input-lng" value="121.0851" />
+
+      <label class="bd-field" id="custom-road-wrap" hidden>
+        <span class="bd-field__label">Specific street / road *</span>
+        <input type="text" class="bd-input" id="custom-road" name="custom_road" maxlength="150" placeholder="Enter the street or road name" />
+      </label>
 
       <label class="bd-field">
         <span class="bd-field__label">Landmark or nearest intersection</span>
@@ -140,16 +141,11 @@
         <textarea class="bd-textarea" name="description" rows="3" required>Floodwater covers both lanes. Pedestrians are turning back and vehicles are rerouting toward M. Suarez Avenue.</textarea>
       </label>
 
-      <div class="bd-form-row">
-        <label class="bd-field">
-          <span class="bd-field__label">Observation date *</span>
-          <input type="date" class="bd-input" name="observed_date" value="2026-10-05" required />
-        </label>
-        <label class="bd-field">
-          <span class="bd-field__label">Observation time *</span>
-          <input type="time" class="bd-input" name="observed_time" value="15:28" required />
-        </label>
-      </div>
+      <label class="bd-field">
+        <span class="bd-field__label">Observation date and time *</span>
+        <input type="datetime-local" class="bd-input" id="observed-at" name="observed_at" required readonly />
+        <span class="bd-field__help">Only the current date and time or a newer time up to now is accepted. Past and future times are disabled.</span>
+      </label>
     </section>
 
     {# ---------- Step 4: photo ---------- #}
@@ -197,4 +193,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/report_form.js') }}"></script>
+<script src="{{ url_for('static', filename='js/report-form-fields.js') }}"></script>
 {% endblock %}

@@ -686,42 +686,34 @@ body.bd-map-page .bd-header{ position: relative; }
 .bd-modal__ref { color: var(--bd-blue); font-weight: 600; margin-bottom: 2px; }
 .bd-modal__loc { color: var(--bd-muted); font-size: 13px; margin-bottom: 12px; }
 
+/* Home page: responsive advisory layout and summary filters */
+.bd-home-advisory-heading { gap: 12px; flex-wrap: wrap; }
+.bd-home-advisory-heading__copy { flex: 1 1 180px; min-width: 0; }
+.bd-home-advisory-heading .bd-card__title { overflow-wrap: anywhere; }
+.bd-advisory-card__top { flex-wrap: wrap; }
+.bd-advisory-card__actions { flex-wrap: wrap; row-gap: 10px; }
+.bd-summary-status { margin: -12px 0 20px; color: var(--bd-muted); font-size: 12.5px; }
+.bd-filter { cursor: pointer; }
+.bd-filter:focus-visible { outline: 3px solid rgba(44,124,184,.35); outline-offset: 2px; }
+@media (max-width: 991.98px) { .bd-advisory-card { height: auto; } }
+/* Stacked cards (home page) must size to their content, not the column height */
+.bd-advisory-card--auto { height: auto; }
+
+/* Global cursor behavior */
+body, body * { cursor: default; }
+a, button, [role="button"], summary, label[for], select, .bd-btn, .bd-nav__link, .bd-subnav__links a, .bd-header__toggle, .bd-user__btn, .bd-map-list li { cursor: pointer; }
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, [contenteditable="true"] { cursor: text; }
+input[type="button"], input[type="submit"], input[type="reset"], input[type="checkbox"], input[type="radio"], input[type="file"] { cursor: pointer; }
+
+/* Public verified-advisory filtering */
+#verifiedAdvisoryGrid > article[hidden] { display: none !important; }
+
+
 /* ============================================================
-   Global cursor behavior
-   Prevent the I-beam mouse cursor from appearing over ordinary
-   page content while preserving expected interactive cursors.
+   Map page: full-width header + map fills the remaining viewport
    ============================================================ */
-body,
-body * {
-  cursor: default;
-}
-
-a,
-button,
-[role="button"],
-summary,
-label[for],
-select,
-.bd-btn,
-.bd-nav__link,
-.bd-subnav__links a,
-.bd-header__toggle,
-.bd-user__btn,
-.bd-map-list li {
-  cursor: pointer;
-}
-
-input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-textarea,
-[contenteditable="true"] {
-  cursor: text;
-}
-
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-input[type="checkbox"],
-input[type="radio"],
-input[type="file"] {
-  cursor: pointer;
-}
+body.bd-map-page { min-height: 100vh; display: flex; flex-direction: column; }
+body.bd-map-page .bd-header__inner.container { max-width: none; padding-left: 20px; padding-right: 20px; }
+body.bd-map-page .bd-main { flex: 1 0 auto; display: flex; flex-direction: column; min-height: 0; padding-bottom: 0; }
+body.bd-map-page .bd-map-shell { flex: 1 0 auto; height: auto; min-height: 560px; }
+body.bd-map-page .bd-footer { margin-top: 0; }

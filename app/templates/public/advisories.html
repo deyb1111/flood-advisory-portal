@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% from 'partials/_macros.html' import badge_verified, pill_not_passable, pill_caution, alert_info %}
 {% set active_page = 'advisories' %}
-{% block title %}Advisories · Bantay Daan Pasig{% endblock %}
+{% block title %}Advisories · Bantay Daan Pasig<p id="noAdvisoriesMatch" class="bd-text-muted mt-3" hidden>No verified advisories match the selected filters.</p>
+<script src="{{ url_for('static', filename='js/advisory-filters.js') }}" defer></script>
+{% endblock %}
 
 {% block content %}
 <div class="container bd-section">
@@ -28,18 +30,18 @@
   {# ---------- Filters ---------- #}
   <div class="bd-card mb-4" style="padding:14px 16px;">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <select class="bd-select" style="width:auto;"><option>All barangays</option><option>Kalawaan</option><option>San Joaquin</option><option>Bambang</option></select>
-      <select class="bd-select" style="width:auto;"><option>All flood conditions</option><option>Gutter-deep</option><option>Ankle-deep</option><option>Knee-deep</option><option>Waist-deep or higher</option></select>
-      <select class="bd-select" style="width:auto;"><option>All road conditions</option><option>Passable</option><option>Difficult to pass</option><option>Not passable</option></select>
-      <button class="bd-filter is-active" type="button">Most recent</button>
-      <span class="ms-auto bd-text-muted" style="font-size:13px;"><strong>6</strong> active advisories</span>
+      <select id="advisoryBarangayFilter" class="bd-select" aria-label="Filter by barangay" style="width:auto;"><option value="all">All barangays</option><option value="Kalawaan">Kalawaan</option><option value="San Joaquin">San Joaquin</option><option value="Bambang">Bambang</option></select>
+      <select id="advisoryFloodFilter" class="bd-select" aria-label="Filter by flood condition" style="width:auto;"><option value="all">All flood conditions</option><option value="Gutter-deep">Gutter-deep</option><option value="Ankle-deep">Ankle-deep</option><option value="Knee-deep">Knee-deep</option><option value="Waist-deep or higher">Waist-deep or higher</option></select>
+      <select id="advisoryRoadFilter" class="bd-select" aria-label="Filter by road condition" style="width:auto;"><option value="all">All road conditions</option><option value="Passable">Passable</option><option value="Difficult to pass">Difficult to pass</option><option value="Not passable">Not passable</option></select>
+      <button id="applyAdvisoryFilters" class="bd-filter is-active" type="button">Most recent</button>
+      <span id="advisoryFilterCount" class="ms-auto bd-text-muted" style="font-size:13px;" aria-live="polite">5 active advisories</span>
     </div>
   </div>
 
   {# ---------- Advisory grid ---------- #}
-  <div class="bd-grid-2">
+  <div id="verifiedAdvisoryGrid" class="bd-grid-2">
 
-    <article class="bd-advisory-card bd-advisory-card--media">
+    <article class="bd-advisory-card bd-advisory-card--media" data-barangay="San Joaquin" data-flood="Waist-deep or higher" data-road="Not passable" data-sort="5">
       <div class="bd-advisory-card__thumb" role="img" aria-label="Placeholder photo"></div>
       <div>
         <div class="bd-advisory-card__top">
@@ -60,7 +62,7 @@
       </div>
     </article>
 
-    <article class="bd-advisory-card">
+    <article class="bd-advisory-card" data-barangay="Kalawaan" data-flood="Gutter-deep" data-road="Difficult to pass" data-sort="4">
       <div class="bd-advisory-card__top">
         {{ badge_verified() }}
         <span class="bd-advisory-card__time">Updated 21 min ago</span>
@@ -78,7 +80,7 @@
       </div>
     </article>
 
-    <article class="bd-advisory-card">
+    <article class="bd-advisory-card" data-barangay="Bambang" data-flood="Ankle-deep" data-road="Difficult to pass" data-sort="3">
       <div class="bd-advisory-card__top">
         {{ badge_verified() }}
         <span class="bd-advisory-card__time">Updated 44 min ago</span>
@@ -96,7 +98,7 @@
       </div>
     </article>
 
-    <article class="bd-advisory-card bd-advisory-card--media">
+    <article class="bd-advisory-card bd-advisory-card--media" data-barangay="Bambang" data-flood="Ankle-deep" data-road="Passable" data-sort="2">
       <div class="bd-advisory-card__thumb" role="img" aria-label="Placeholder photo"></div>
       <div>
         <div class="bd-advisory-card__top">
@@ -117,7 +119,7 @@
       </div>
     </article>
 
-    <article class="bd-advisory-card">
+    <article class="bd-advisory-card" data-barangay="Kalawaan" data-flood="Gutter-deep" data-road="Passable" data-sort="1">
       <div class="bd-advisory-card__top">
         {{ badge_verified() }}
         <span class="bd-advisory-card__time">Updated 1 hr 18 min ago</span>
@@ -136,4 +138,6 @@
 
   </div>
 </div>
+<p id="noAdvisoriesMatch" class="bd-text-muted mt-3" hidden>No verified advisories match the selected filters.</p>
+<script src="{{ url_for('static', filename='js/advisory-filters.js') }}" defer></script>
 {% endblock %}
