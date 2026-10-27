@@ -1,0 +1,8 @@
+{% extends 'admin/_base.html' %}
+{% block title %}Audit log Â· Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-page-head"><div><p class="admin-eyebrow">SECURITY AND ACCOUNTABILITY</p><h1>Administrator audit log</h1><p>Read-only history of recorded system actions. Showing the latest 250 entries.</p></div></div>
+<section class="admin-panel"><div class="table-responsive"><table class="table admin-table"><thead><tr><th>Timestamp</th><th>Actor</th><th>Barangay</th><th>Action</th><th>Record</th><th>Details</th></tr></thead><tbody>
+{% for item in rows %}<tr><td>{{ item.created_at|dt('%d %b %Y, %H:%M:%S') }}</td><td>{{ item.user.full_name if item.user else 'Unknown' }}</td><td>{{ item.barangay.name if item.barangay else 'â€”' }}</td><td>{{ item.action|replace('_',' ')|title }}</td><td>{{ item.record_type or 'â€”' }}{% if item.record_id %} #{{ item.record_id }}{% endif %}</td><td>{{ item.details or 'â€”' }}</td></tr>{% else %}<tr><td colspan="6" class="admin-empty">No audit entries available.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

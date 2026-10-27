@@ -1,0 +1,9 @@
+{% extends 'admin/_base.html' %}
+{% block title %}Data and privacy Â· Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-page-head"><div><p class="admin-eyebrow">PRIVACY OPERATIONS</p><h1>Data and privacy</h1><p>Review and update data disposal requests. Requests are not automatically deleted by changing status.</p></div></div>
+<section class="admin-panel"><div class="table-responsive"><table class="table admin-table"><thead><tr><th>Request</th><th>Email</th><th>Details</th><th>Submitted</th><th>Status</th><th>Update status</th></tr></thead><tbody>
+{% for item in requests_list %}<tr><td>#{{ item.request_id }}</td><td>{{ item.email }}</td><td>{{ item.details or 'â€”' }}</td><td>{{ item.created_at|dt('%d %b %Y') }}</td><td>{{ item.status|title }}</td><td><form class="admin-inline-form" method="post" action="{{ url_for('admin.disposal_status', request_id=item.request_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><select class="form-select form-select-sm" name="status" aria-label="Request status">{% for s in ['pending','approved','rejected','completed'] %}<option value="{{ s }}" {{ 'selected' if item.status == s }}>{{ s|title }}</option>{% endfor %}</select><button class="btn btn-sm btn-primary">Save</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="admin-empty">No data disposal requests have been submitted.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

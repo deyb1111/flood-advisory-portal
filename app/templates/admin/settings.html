@@ -1,0 +1,7 @@
+{% extends 'admin/_base.html' %}
+{% block title %}System settings Â· Admin{% endblock %}
+{% block admin_content %}
+<div class="admin-page-head"><div><p class="admin-eyebrow">CONFIGURATION</p><h1>System settings</h1><p>Update configurable thresholds stored in the database.</p></div></div>
+<section class="admin-panel admin-form-panel"><h2>Flood threshold</h2><p>Threshold in centimeters used as a system configuration value. Updating this setting does not alter existing reports.</p>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="form-label" for="threshold">Flood threshold (cm)</label><input class="form-control admin-threshold" id="threshold" name="flood_threshold_cm" type="number" min="1" max="300" step="1" value="{{ threshold }}" required><div class="form-text mb-3">Enter a whole number from 1 to 300.</div><button class="btn btn-primary">Save setting</button></form></section>
+{% endblock %}

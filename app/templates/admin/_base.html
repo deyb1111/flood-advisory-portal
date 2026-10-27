@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block header %}
+<header class="admin-header">
+  <a href="{{ url_for('admin.overview') }}" class="admin-brand"><span class="admin-mark">BD</span><span><strong>Bantay Daan Pasig</strong><small>System administration</small></span></a>
+  <div class="admin-account"><span>{{ current_user.full_name }}</span><a href="{{ url_for('auth.logout') }}">Sign out</a></div>
+</header>
+{% endblock %}
+{% block subnav %}
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <p class="admin-nav-label">ADMINISTRATION</p>
+    <a class="{% if active_admin == 'overview' %}active{% endif %}" href="{{ url_for('admin.overview') }}">Overview</a>
+    <a class="{% if active_admin == 'staff' %}active{% endif %}" href="{{ url_for('admin.users', role='staff') }}">Personnel accounts</a>
+    <a class="{% if active_admin == 'resident' %}active{% endif %}" href="{{ url_for('admin.users', role='resident') }}">Resident accounts</a>
+    <a class="{% if active_admin == 'audit' %}active{% endif %}" href="{{ url_for('admin.audit_log') }}">Audit log</a>
+    <a class="{% if active_admin == 'privacy' %}active{% endif %}" href="{{ url_for('admin.data_privacy') }}">Data and privacy</a>
+    <a class="{% if active_admin == 'settings' %}active{% endif %}" href="{{ url_for('admin.settings') }}">System settings</a>
+  </aside>
+  <main class="admin-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'warning' }}">{{ message }}</div>
+    {% endfor %}{% endwith %}
+    {% block admin_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
+{% block content %}{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}"></script>{% endblock %}

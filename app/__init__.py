@@ -46,12 +46,14 @@ def create_app():
     from app.views.auth import auth_bp
     from app.views.api import api_bp
     from app.views.personnel import personnel_bp
+    from app.views.admin import admin_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(resident_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(personnel_bp, url_prefix='/personnel')
+    app.register_blueprint(admin_bp)
 
        # Fix for Windows strftime (Windows doesn't support %-d or %-I)
     @app.template_filter('dt')

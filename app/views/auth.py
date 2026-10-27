@@ -45,8 +45,10 @@ def login():
             if nxt:
                 return redirect(nxt)
             
-            # Send staff/admins to the personnel dashboard, residents to home
-            if user.role in ('staff', 'admin'):
+            # Keep administrators in the system administration area.
+            if user.role == 'admin':
+                return redirect(url_for('admin.overview'))
+            if user.role == 'staff':
                 return redirect(url_for('personnel.dashboard'))
             return redirect(url_for('public.home'))
             

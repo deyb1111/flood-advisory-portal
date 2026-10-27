@@ -1,0 +1,14 @@
+{% extends 'admin/_base.html' %}
+{% block title %}Administrator overview Â· Bantay Daan Pasig{% endblock %}
+{% block admin_content %}
+<div class="admin-page-head"><div><p class="admin-eyebrow">SYSTEM CONTROL</p><h1>Administrator overview</h1><p>Manage access, review administrative activity, and maintain system settings.</p></div></div>
+<div class="admin-stats">
+{% for label, value in [('Resident accounts', counts.residents), ('Personnel accounts', counts.personnel), ('Administrators', counts.admins), ('Inactive accounts', counts.inactive)] %}
+<div class="admin-stat"><span>{{ label }}</span><strong>{{ value }}</strong></div>
+{% endfor %}
+</div>
+<section class="admin-panel"><div class="admin-panel-head"><div><h2>Recent audit activity</h2><p>Latest recorded administrative and personnel actions</p></div><a href="{{ url_for('admin.audit_log') }}">View audit log</a></div>
+{% if recent %}<div class="table-responsive"><table class="table admin-table"><thead><tr><th>Action</th><th>Actor</th><th>Details</th><th>Date and time</th></tr></thead><tbody>
+{% for item in recent %}<tr><td><span class="admin-tag">{{ item.action|replace('_',' ')|title }}</span></td><td>{{ item.user.full_name if item.user else 'Unknown user' }}</td><td>{{ item.details or 'â€”' }}</td><td>{{ item.created_at|dt('%d %b %Y, %H:%M') }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-empty">No audit activity has been recorded yet.</p>{% endif %}</section>
+{% endblock %}

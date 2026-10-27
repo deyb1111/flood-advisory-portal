@@ -162,3 +162,24 @@ class ActivityLog(db.Model):
 
     user = db.relationship('User', backref='activity_logs')
     barangay = db.relationship('Barangay', backref='activity_logs')
+
+
+class SystemSetting(db.Model):
+    __tablename__ = 'system_settings'
+    key = db.Column(db.String(100), primary_key=True)
+    value = db.Column(db.String(255), nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
+                            onupdate=datetime.utcnow)
+
+
+class DataDisposalRequest(db.Model):
+    __tablename__ = 'data_disposal_requests'
+    request_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(190), nullable=False)
+    details = db.Column(db.Text, nullable=True)
+    status = db.Column(db.Enum('pending', 'approved', 'rejected', 'completed',
+                               name='data_disposal_statuses'), nullable=False, default='pending')
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='SET NULL'), nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
