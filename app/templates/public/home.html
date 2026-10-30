@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'partials/_macros.html' import badge_verified, pill_not_passable, pill_caution, alert_info %}
+{% from 'partials/_macros.html' import badge_verified, pill_not_passable, pill_caution, pill_passable, alert_info %}
 {% set active_page = 'home' %}
 {% block title %}Home · Bantay Daan Pasig{% endblock %}
 
@@ -40,32 +40,16 @@
       <button class="bd-filter" type="button" data-summary-filter="san-joaquin" aria-pressed="false">San Joaquin <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
       <button class="bd-filter" type="button" data-summary-filter="bambang" aria-pressed="false">Bambang <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.6"/></svg></button>
     </div>
-    <span class="ms-auto bd-text-muted" style="font-size:12.5px;" data-poll="last-updated">Last refreshed today, 3:42 PM</span>
+    <span class="ms-auto bd-text-muted" style="font-size:12.5px;" data-poll="last-updated">Last refreshed</span>
   </div>
   <p class="bd-summary-status" data-summary-status aria-live="polite">Showing the combined summary for all three barangays.</p>
 
-  {# ---------- Stat cards ---------- #}
+  {# ---------- Database-backed summary cards ---------- #}
   <div class="bd-stats-row">
-    <div class="bd-stat">
-      <p class="bd-stat__label">Active verified advisories</p>
-      <p class="bd-stat__value bd-stat__value--blue">6</p>
-      <p class="bd-stat__note">Across all three covered barangays</p>
-    </div>
-    <div class="bd-stat">
-      <p class="bd-stat__label">Flood conditions</p>
-      <p class="bd-stat__value bd-stat__value--amber">3 roads</p>
-      <p class="bd-stat__note">2 moderate · 1 knee-deep section</p>
-    </div>
-    <div class="bd-stat">
-      <p class="bd-stat__label">Road conditions</p>
-      <p class="bd-stat__value bd-stat__value--amber">2 affected</p>
-      <p class="bd-stat__note">1 not passable · 1 difficult</p>
-    </div>
-    <div class="bd-stat">
-      <p class="bd-stat__label">Recently cleared</p>
-      <p class="bd-stat__value bd-stat__value--green">4</p>
-      <p class="bd-stat__note">Resolved in the last 24 hours</p>
-    </div>
+    <div class="bd-stat"><p class="bd-stat__label">Active verified advisories</p><p class="bd-stat__value bd-stat__value--blue">{{ stats.active }}</p><p class="bd-stat__note">Currently published and active</p></div>
+    <div class="bd-stat"><p class="bd-stat__label">Flood reports</p><p class="bd-stat__value bd-stat__value--amber">{{ stats.flood }}</p><p class="bd-stat__note">In active verified advisories</p></div>
+    <div class="bd-stat"><p class="bd-stat__label">Affected roads</p><p class="bd-stat__value bd-stat__value--amber">{{ stats.affected }}</p><p class="bd-stat__note">Difficult or not passable</p></div>
+    <div class="bd-stat"><p class="bd-stat__label">Recently cleared</p><p class="bd-stat__value bd-stat__value--green">{{ stats.resolved }}</p><p class="bd-stat__note">Resolved in the last 24 hours</p></div>
   </div>
 
   {# ---------- Two-column content ---------- #}
@@ -85,40 +69,24 @@
           </a>
         </div>
 
-        <div class="bd-affected-row" data-barangay="san-joaquin">
-          <div class="bd-affected-row__mark bd-affected-row__mark--red">
-            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
-          </div>
-          <div class="bd-affected-row__body">
-            <p class="bd-affected-row__title">A. Sandoval Avenue near E. Santos</p>
-            <p class="bd-affected-row__meta">Barangay San Joaquin · Knee-deep floodwater</p>
-          </div>
-          {{ pill_not_passable() }}
-          <span class="bd-affected-row__time">3:36 PM</span>
-        </div>
-
-        <div class="bd-affected-row" data-barangay="kalawaan">
-          <div class="bd-affected-row__mark bd-affected-row__mark--amber">
+        <div data-live="affected-roads">
+        {% for a in recent_advisories if a.road and a.barangay %}
+        <div class="bd-affected-row" data-barangay="{{ a.barangay.name|lower|replace(' ', '-') }}">
+          <div class="bd-affected-row__mark {{ 'bd-affected-row__mark--red' if a.road_status == 'not_passable' else 'bd-affected-row__mark--amber' }}">
             <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
           </div>
           <div class="bd-affected-row__body">
-            <p class="bd-affected-row__title">Lopez Jaena Street</p>
-            <p class="bd-affected-row__meta">Barangay Kalawaan · Gutter-deep floodwater</p>
+            <p class="bd-affected-row__title">{{ a.title or a.road.name }}</p>
+            <p class="bd-affected-row__meta">Barangay {{ a.barangay.name }} · {{ a.road.name }} · {{ {'passable':'Passable','caution':'Difficult to pass','not_passable':'Not passable'}.get(a.road_status, a.road_status) }}</p>
           </div>
-          {{ pill_caution() }}
-          <span class="bd-affected-row__time">3:21 PM</span>
+          {% if a.road_status == 'not_passable' %}{{ pill_not_passable() }}
+          {% elif a.road_status == 'caution' %}{{ pill_caution() }}
+          {% else %}{{ pill_passable() }}{% endif %}
+          <span class="bd-affected-row__time">{{ time_ago(a.published_at) }}</span>
         </div>
-
-        <div class="bd-affected-row" data-barangay="bambang">
-          <div class="bd-affected-row__mark bd-affected-row__mark--amber">
-            <svg viewBox="0 0 16 16"><path d="M8 3l6 10H2z" fill="none"/><path d="M8 7v3M8 11.5v.1"/></svg>
-          </div>
-          <div class="bd-affected-row__body">
-            <p class="bd-affected-row__title">M. Concepcion Avenue</p>
-            <p class="bd-affected-row__meta">Barangay Bambang · Slow traffic near flooded curb</p>
-          </div>
-          {{ pill_caution() }}
-          <span class="bd-affected-row__time">2:58 PM</span>
+        {% else %}
+        <p class="bd-text-muted">No active verified affected roads.</p>
+        {% endfor %}
         </div>
       </div>
     </div>
@@ -133,45 +101,33 @@
         <a href="{{ url_for('public.advisories') }}" class="bd-btn bd-btn--quiet">See all</a>
       </div>
 
-      <article class="bd-advisory-card bd-advisory-card--auto mb-3" data-poll="advisory" data-barangay="san-joaquin">
+      <div data-live="home-advisories">
+      {% for a in recent_advisories %}
+      <article class="bd-advisory-card bd-advisory-card--auto mb-3" data-poll="advisory" data-barangay="{{ a.barangay.name|lower|replace(' ', '-') }}">
         <div class="bd-advisory-card__top">
           {{ badge_verified() }}
-          <span class="bd-advisory-card__time">Updated 6 min ago</span>
+          <span class="bd-advisory-card__time">Updated {{ time_ago(a.published_at) }}</span>
         </div>
-        <h3 class="bd-advisory-card__title">Flooding near A. Sandoval intersection</h3>
-        <p class="bd-advisory-card__loc">San Joaquin · A. Sandoval Ave</p>
+        <h3 class="bd-advisory-card__title">{{ a.title or a.road.name }}</h3>
+        <p class="bd-advisory-card__loc">{{ a.barangay.name }} · {{ a.road.name }}</p>
         <div class="bd-advisory-card__tags">
-          {{ pill_not_passable() }}
-          <span class="bd-chip">Flood reported</span>
+          {% if a.road_status == 'not_passable' %}{{ pill_not_passable() }}
+          {% elif a.road_status == 'caution' %}{{ pill_caution() }}
+          {% else %}{{ pill_passable() }}{% endif %}
+          {% if a.report %}<span class="bd-chip">{{ 'Flood' if a.report.report_type == 'flood' else 'Traffic' }} reported</span>{% endif %}
         </div>
         <div class="bd-advisory-card__actions">
           <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">
             <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
             View on Map
           </a>
-          <a href="{{ url_for('public.advisory_detail', advisory_id='ADV-SJ-2026-1005-031') }}">View details</a>
+          <a href="{{ url_for('public.advisory_detail', advisory_id=a.advisory_id) }}">View details</a>
         </div>
       </article>
-
-      <article class="bd-advisory-card bd-advisory-card--auto" data-poll="advisory" data-barangay="kalawaan">
-        <div class="bd-advisory-card__top">
-          {{ badge_verified() }}
-          <span class="bd-advisory-card__time">Updated 21 min ago</span>
-        </div>
-        <h3 class="bd-advisory-card__title">Water receding along Lopez Jaena</h3>
-        <p class="bd-advisory-card__loc">Kalawaan · Lopez Jaena St</p>
-        <div class="bd-advisory-card__tags">
-          {{ pill_caution() }}
-          <span class="bd-chip">Flood reported</span>
-        </div>
-        <div class="bd-advisory-card__actions">
-          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">
-            <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
-            View on Map
-          </a>
-          <a href="#">View details</a>
-        </div>
-      </article>
+      {% else %}
+      <p class="bd-text-muted" style="font-size:13px;">No active verified advisories right now.</p>
+      {% endfor %}
+      </div>
     </div>
   </div>
 </div>
@@ -180,4 +136,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
 <script src="{{ url_for('static', filename='js/home-summary.js') }}"></script>
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 {% endblock %}

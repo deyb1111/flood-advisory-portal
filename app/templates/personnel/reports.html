@@ -29,6 +29,7 @@
   </div>
 </form>
 
+<div data-live="list">
 <div class="bd-table-head-row">
   <span><strong>{{ pagination.total }}</strong> reports · newest first</span>
   <span>{{ stats.awaiting_verification }} awaiting review</span>
@@ -91,8 +92,13 @@
     {% if pagination.has_next %}<a class="bd-btn bd-btn--secondary" href="{{ pagination.next_url }}">Next</a>{% endif %}
   </nav>
 </div>
+</div>
 
 <p class="bd-text-muted" style="font-size:12.5px;margin-top:16px;">
   Unverified = awaiting review · Verified = reviewed and accepted · Rejected = not accepted. Verification does not publish an advisory.
 </p>
+{% endblock %}
+
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 {% endblock %}

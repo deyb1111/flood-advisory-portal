@@ -101,6 +101,65 @@ class Report(db.Model):
     def submitted_at(self):
         return self.created_at
 
+    # ----- community upvotes (see ReportUpvote) -----
+    @property
+    def upvote_count(self):
+        return len(self.upvotes)
+
+    def is_upvoted_by(self, user):
+        return any(u.user_id == user.user_id for u in self.upvotes)
+
+    # ----- resident "My Reports" helpers (derived; no schema change) -----
+    @property
+    def road_condition(self):
+        """'passable' | 'caution' | 'not_passable' | None.
+        Published advisory wins; otherwise inferred from traffic/water level."""
+        published = [a for a in self.advisories if a.status == 'published']
+        if published:
+            return max(published, key=lambda a: a.published_at).road_status
+        if self.traffic_level:
+            return {'light': 'passable', 'heavy': 'caution',
+                    'standstill': 'not_passable'}.get(self.traffic_level)
+        if self.water_level:
+            return {'none': 'passable', 'gutter': 'passable', 'ankle': 'caution',
+                    'knee': 'not_passable', 'waist_or_higher': 'not_passable'}.get(self.water_level)
+        return None
+
+    @property
+    def resident_status(self):
+        """'pending' | 'verified' | 'resolved' | 'rejected'."""
+        if any(a.is_resolved for a in self.advisories):
+            return 'resolved'
+        return 'pending' if self.status in ('pending', 'unverified') else self.status
+
+    @property
+    def latest_update_at(self):
+        v = self.latest_verification
+        return v.decided_at if v else self.created_at
+
+    @property
+    def condition_label(self):
+        """Human label for the reported water level / traffic level."""
+        if self.water_level:
+            return {'none': 'No standing water', 'gutter': 'Gutter-deep', 'ankle': 'Ankle-deep',
+                    'knee': 'Knee-deep', 'waist_or_higher': 'Waist-deep or higher'}.get(self.water_level, self.water_level)
+        if self.traffic_level:
+            return {'light': 'Light traffic', 'heavy': 'Heavy traffic',
+                    'standstill': 'Standstill'}.get(self.traffic_level, self.traffic_level)
+        return None
+
+    @property
+    def display_title(self):
+        lead = 'Flooding' if self.report_type == 'flood' else 'Road / traffic issue'
+        if self.road:
+            return f'{lead} near {self.road.name}'
+        return f'{lead} in {self.barangay.name}'
+
+    @property
+    def first_verified_at(self):
+        times = [v.decided_at for v in self.verifications if v.decision == 'verified']
+        return min(times) if times else None
+
 
 class Verification(db.Model):
     __tablename__ = 'verifications'
@@ -113,6 +172,20 @@ class Verification(db.Model):
 
     report = db.relationship('Report', backref='verifications')
     staff = db.relationship('User', backref='verifications')
+
+
+class ReportUpvote(db.Model):
+    """A nearby resident's confirmation of a report (one per user per report)."""
+    __tablename__ = 'report_upvotes'
+    upvote_id = db.Column(db.Integer, primary_key=True)
+    report_id = db.Column(db.Integer, db.ForeignKey('reports.report_id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('report_id', 'user_id', name='uq_report_upvotes_report_user'),)
+
+    report = db.relationship('Report', backref=db.backref('upvotes', cascade='all, delete-orphan', passive_deletes=True))
+    user = db.relationship('User', backref=db.backref('upvotes', passive_deletes=True))
 
 
 class Advisory(db.Model):
@@ -146,6 +219,29 @@ class Advisory(db.Model):
     @property
     def status_label(self):
         return self.status.title()
+
+
+class Notification(db.Model):
+    """In-app notification for personnel (e.g. a new report in their barangay)."""
+    __tablename__ = 'notifications'
+    notification_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    report_id = db.Column(db.Integer, db.ForeignKey('reports.report_id', ondelete='CASCADE', onupdate='CASCADE'), nullable=True)
+    message = db.Column(db.String(255), nullable=False)
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='notifications')
+    report = db.relationship('Report', backref='notifications')
+
+    def to_dict(self):
+        from flask import url_for
+        endpoint = ('resident.report_detail' if self.user and self.user.role == 'resident'
+                    else 'personnel.report_detail')
+        return {'id': self.notification_id, 'report_id': self.report_id,
+                'url': url_for(endpoint, report_id=self.report_id) if self.report_id else None,
+                'message': self.message, 'is_read': self.is_read,
+                'created_at': self.created_at.strftime('%d %b · %I:%M %p')}
 
 
 class ActivityLog(db.Model):

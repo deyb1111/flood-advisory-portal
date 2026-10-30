@@ -6,15 +6,18 @@ Reuses existing models (Report, Verification, Advisory, Road) and writes
 ActivityLog entries on state changes.
 """
 from datetime import datetime
+import os
 from functools import wraps
 
-from flask import (Blueprint, abort, current_app, flash, redirect,
+from flask import (Blueprint, abort, current_app, flash, jsonify, redirect,
                    render_template, request, send_from_directory, url_for)
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import db
-from app.models import Advisory, ActivityLog, Report, Road, Verification
+from app.models import Advisory, ActivityLog, Notification, Report, Road, Verification
+from app.services.roads import official_roads
 
 
 bp = Blueprint('personnel', __name__, template_folder='../templates/personnel')
@@ -66,10 +69,9 @@ def _log(action, record_type=None, record_id=None, details=''):
 
 
 def _streets():
-    """Return [(road_id, name), ...] for the current user's barangay."""
-    return [(r.road_id, r.name) for r in Road.query
-            .filter_by(barangay_id=current_user.barangay_id)
-            .order_by(Road.name).all()]
+    """Return [(road_id, name), ...] of the official thoroughfares for the
+    current user's barangay (see app/services/roads.py)."""
+    return [(r.road_id, r.name) for r in official_roads(current_user.barangay_id)]
 
 
 # ------------------------------------------------------------------ dashboard
@@ -140,6 +142,23 @@ def reports():
 @personnel_required
 def report_detail(report_id):
     report = _reports_query().filter_by(report_id=report_id).first_or_404()
+    # Marking a notification as read is ancillary to viewing a report. Some
+    # installations may not have applied notification_migration.sql yet; in
+    # that case, do not let the missing notifications table prevent personnel
+    # from opening the report. Roll back the failed transaction before queries
+    # continue so the SQLAlchemy session remains usable.
+    try:
+        Notification.query.filter_by(user_id=current_user.user_id,
+                                     report_id=report.report_id, is_read=False
+                                     ).update({'is_read': True})
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        current_app.logger.exception(
+            'Could not mark notifications as read while opening report %s',
+            report.report_id,
+        )
+
     next_report = (_reports_query()
         .filter(Report.status.in_(['pending', 'unverified']))
         .filter(Report.report_id != report.report_id)
@@ -166,6 +185,31 @@ def report_verify(report_id):
         remarks=remarks,
     ))
     report.status = 'verified'
+
+    # A verified report becomes a public advisory immediately, so every public
+    # surface (home feed, advisories page, and map API) reads the same record.
+    existing = Advisory.query.filter_by(report_id=report.report_id,
+                                        status='published').first()
+    if not existing:
+        if report.traffic_level:
+            road_status = {'light': 'passable', 'heavy': 'caution',
+                           'standstill': 'not_passable'}.get(report.traffic_level, 'caution')
+        else:
+            road_status = {'none': 'passable', 'gutter': 'passable',
+                           'ankle': 'caution', 'knee': 'not_passable',
+                           'waist_or_higher': 'not_passable'}.get(report.water_level, 'caution')
+        db.session.add(Advisory(
+            report_id=report.report_id,
+            barangay_id=report.barangay_id,
+            road_id=report.road_id,
+            published_by=current_user.user_id,
+            road_status=road_status,
+            title=f'{report.report_type.title()} advisory: {report.road.name if report.road else "Road condition"}',
+            message=remarks or report.description or 'Verified community road condition report.',
+            status='published',
+            is_resolved=False,
+        ))
+
     _log('Report verified', 'report', report.report_id,
          remarks or 'Accepted after photo and location review.')
     db.session.commit()
@@ -195,6 +239,25 @@ def report_reject(report_id):
     db.session.commit()
     flash(f'Report {report.short_ref} rejected.', 'success')
     return redirect(url_for('personnel.reports'))
+
+
+# ------------------------------------------------------------------ notifications
+@bp.get('/api/notifications')
+@personnel_required
+def api_notifications():
+    q = Notification.query.filter_by(user_id=current_user.user_id)
+    items = q.order_by(Notification.notification_id.desc()).limit(8).all()
+    return jsonify(unread=q.filter_by(is_read=False).count(),
+                   items=[n.to_dict() for n in items])
+
+
+@bp.post('/api/notifications/read')
+@personnel_required
+def api_notifications_read():
+    Notification.query.filter_by(user_id=current_user.user_id, is_read=False
+                                 ).update({'is_read': True})
+    db.session.commit()
+    return jsonify(ok=True)
 
 
 # ------------------------------------------------------------------ map
@@ -297,12 +360,20 @@ def _advisory_form(adv):
         errors = {}
         if not f['title']:
             errors['title'] = 'Title is required.'
+        elif len(f['title']) > 200:
+            errors['title'] = 'Title must be 200 characters or fewer.'
         if not f['message']:
             errors['message'] = 'Description is required.'
         if not f['report_id']:
             errors['report_id'] = 'Select an accepted, verified report.'
+        elif f['report_id'] not in {str(r.report_id) for r in eligible}:
+            errors['report_id'] = 'Select a verified report from your barangay.'
+        if f['road_status'] not in ('passable', 'caution', 'not_passable'):
+            errors['road_status'] = 'Choose a valid road status.'
         if not f['road_id']:
             errors['road_id'] = 'Choose a street.'
+        elif f['road_id'] not in {str(rid) for rid, _ in streets}:
+            errors['road_id'] = 'Choose a listed street in your barangay.'
 
         if errors:
             return render_template('personnel/advisory_compose.html',
@@ -427,6 +498,9 @@ def report_photo(report_id, filename):
     safe = secure_filename(filename)
     if safe != secure_filename(report.photo_path.split('/')[-1]):
         abort(404)
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], safe)
+    folder = current_app.config['UPLOAD_FOLDER']
+    if not os.path.isabs(folder):
+        folder = os.path.join(current_app.root_path, folder)
+    return send_from_directory(folder, safe)
 
 personnel_bp = bp

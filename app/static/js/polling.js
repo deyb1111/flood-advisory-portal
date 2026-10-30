@@ -15,10 +15,11 @@
     });
   }
 
-  function refresh() {
-    // In a real app, replace with fetch('/api/advisories') and re-render.
-    // Here we simply keep the "last updated" text honest.
-    stamp();
+  async function refresh() {
+    try {
+      const response = await fetch('/api/advisories', { credentials: 'same-origin', cache: 'no-store' });
+      if (response.ok) stamp();
+    } catch (_) { /* Keep the previous refresh time when the API is unavailable. */ }
   }
 
   stamp();

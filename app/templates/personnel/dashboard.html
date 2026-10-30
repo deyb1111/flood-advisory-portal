@@ -12,7 +12,7 @@
   <a class="bd-btn bd-btn--secondary" href="{{ url_for('personnel.advisory_create') }}">Compose advisory</a>
 </div>
 
-<div class="bd-stat-grid">
+<div class="bd-stat-grid" data-live="stats">
   {% for label, value, note in [
        ('Total submitted', stats.total_submitted, 'All reports'),
        ('Awaiting verification', stats.awaiting_verification, 'Unverified reports'),
@@ -32,6 +32,7 @@
     <div class="bd-card">
       <h2 class="bd-card__title mb-1">Recent community reports</h2>
       <p class="bd-text-muted mb-3" style="font-size:13px;">Most recent first · {{ current_user.barangay.name }} only</p>
+      <div data-live="recent">
       {% if recent_reports %}
         {% for r in recent_reports %}
         <a class="bd-report-row" href="{{ url_for('personnel.report_detail', report_id=r.report_id) }}">
@@ -49,6 +50,7 @@
       {% else %}
         {{ state_card('No reports yet', 'No resident submissions for your barangay yet. New reports will appear here.') }}
       {% endif %}
+      </div>
     </div>
   </div>
 
@@ -90,4 +92,5 @@
 
 {% block personnel_scripts %}
 <script src="{{ url_for('static', filename='js/personnel-map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 {% endblock %}

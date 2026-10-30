@@ -12,22 +12,22 @@
     </div>
     <span class="bd-badge bd-badge--verified mb-3">Report received</span>
     <h1>Thank you for helping your community.</h1>
-    <p>Your observation has been sent to authorized Barangay San Joaquin personnel for review.</p>
+    <p>Your observation has been sent to authorized {{ report.barangay.name }} personnel for review.</p>
 
     <div class="bd-card bd-confirm__card">
       <p class="bd-eyebrow mb-1">Report reference</p>
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <strong style="font-size:22px;">BDP-2026-1005-1842</strong>
+        <strong style="font-size:22px;">{{ report.reference }}</strong>
         {{ badge_pending() }}
       </div>
       <div class="bd-form-row">
         <div>
           <p class="bd-kv__label">Submitted location</p>
-          <p class="bd-kv__value" style="font-size:14px;">A. Sandoval Ave near E. Santos St, Barangay San Joaquin</p>
+          <p class="bd-kv__value" style="font-size:14px;">{{ report.road.name if report.road else '—' }}, {{ report.barangay.name }}</p>
         </div>
         <div>
           <p class="bd-kv__label">Submitted</p>
-          <p class="bd-kv__value" style="font-size:14px;">Oct 5, 2026 · 3:31 PM</p>
+          <p class="bd-kv__value" style="font-size:14px;">{{ report.created_at|dt('%b %d, %Y · %I:%M %p') }}</p>
         </div>
       </div>
     </div>

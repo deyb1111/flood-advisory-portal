@@ -26,10 +26,14 @@
           {% if advisory %}<span class="bd-ref">{{ advisory.reference }}</span>{% endif %}
         </div>
 
-        <label class="bd-field__label" for="adv-title">Advisory title *</label>
-        <input id="adv-title" name="title" class="bd-input {{ 'is-invalid' if form_errors and form_errors.title }}"
-               value="{{ form.title }}" placeholder="Enter a clear advisory title" data-preview-target="title" />
-        {% if form_errors and form_errors.title %}<span class="bd-field__error">{{ form_errors.title }}</span>{% endif %}
+        <div class="bd-field">
+          <label class="bd-field__label" for="adv-title">Advisory title *</label>
+          <input id="adv-title" name="title" type="text" maxlength="200" required
+                 class="bd-input {{ 'is-invalid' if form_errors and form_errors.title }}"
+                 value="{{ form.title }}" placeholder="Enter a clear advisory title"
+                 autocomplete="off" aria-describedby="adv-title-error" data-preview-target="title" />
+          {% if form_errors and form_errors.title %}<span id="adv-title-error" class="bd-field__error">{{ form_errors.title }}</span>{% endif %}
+        </div>
 
         <label class="bd-field__label mt-3" for="adv-message">Description *</label>
         <textarea id="adv-message" name="message" rows="3"
@@ -80,6 +84,7 @@
           <option value="caution" {{ 'selected' if form.road_status == 'caution' }}>Difficult to pass</option>
           <option value="not_passable" {{ 'selected' if form.road_status == 'not_passable' }}>Not passable</option>
         </select>
+        {% if form_errors and form_errors.road_status %}<span class="bd-field__error">{{ form_errors.road_status }}</span>{% endif %}
         <p class="bd-text-muted" style="font-size:12.5px;margin-top:12px;">
           Condition observed in the source report. Review currency before publication.
         </p>

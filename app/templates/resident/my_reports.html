@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'partials/_macros.html' import badge_pending, badge_verified, badge_rejected, badge_resolved, alert_info %}
+{% from 'partials/_macros.html' import badge_pending, badge_verified, badge_rejected, badge_resolved, pill_passable, pill_caution, pill_not_passable, alert_info %}
 {% set active_page = 'my_reports' %}
 {% block title %}My Reports · Bantay Daan Pasig{% endblock %}
 
@@ -19,35 +19,56 @@
   </div>
 
   {# ---------- Stat cards ---------- #}
-  <div class="bd-stats-row">
+  <div class="bd-stats-row" data-live="stats">
     <div class="bd-stat">
       <p class="bd-stat__label">Pending Verification</p>
-      <p class="bd-stat__value bd-stat__value--amber">1</p>
+      <p class="bd-stat__value bd-stat__value--amber">{{ stats.pending }}</p>
       <p class="bd-stat__note">Awaiting authorized review</p>
     </div>
     <div class="bd-stat">
       <p class="bd-stat__label">Verified</p>
-      <p class="bd-stat__value bd-stat__value--green">1</p>
+      <p class="bd-stat__value bd-stat__value--green">{{ stats.verified }}</p>
       <p class="bd-stat__note">Used in an official advisory</p>
     </div>
     <div class="bd-stat">
       <p class="bd-stat__label">Resolved</p>
-      <p class="bd-stat__value">1</p>
+      <p class="bd-stat__value">{{ stats.resolved }}</p>
       <p class="bd-stat__note">Condition no longer active</p>
     </div>
     <div class="bd-stat">
       <p class="bd-stat__label">Rejected</p>
-      <p class="bd-stat__value bd-stat__value--red">1</p>
+      <p class="bd-stat__value bd-stat__value--red">{{ stats.rejected }}</p>
       <p class="bd-stat__note">See the verification result</p>
     </div>
   </div>
 
   {# ---------- Filters ---------- #}
-  <div class="bd-filter-row mb-3">
-    <button class="bd-filter is-active" type="button">All statuses</button>
-    <select class="bd-select" style="width:auto;"><option>All report types</option><option>Flood</option><option>Road condition</option></select>
-    <select class="bd-select" style="width:auto;"><option>Most recent</option><option>Oldest</option></select>
-  </div>
+  <form class="bd-filter-row mb-3" method="get" action="{{ url_for('resident.my_reports') }}">
+    <select class="bd-select" name="status" style="width:auto;" aria-label="Filter by status" onchange="this.form.submit()">
+      {% for v, l in [('all','All statuses'),('pending','Pending'),('verified','Verified'),('resolved','Resolved'),('rejected','Rejected')] %}
+      <option value="{{ v }}" {{ 'selected' if filters.status == v }}>{{ l }}</option>
+      {% endfor %}
+    </select>
+    <select class="bd-select" name="condition" style="width:auto;" aria-label="Filter by road condition" onchange="this.form.submit()">
+      {% for v, l in [('all','All road conditions'),('passable','Passable'),('caution','Difficult to pass'),('not_passable','Not passable')] %}
+      <option value="{{ v }}" {{ 'selected' if filters.condition == v }}>{{ l }}</option>
+      {% endfor %}
+    </select>
+    <select class="bd-select" name="period" style="width:auto;" aria-label="Filter by date" onchange="this.form.submit()">
+      {% for v, l in [('all','Any time'),('24h','Last 24 hours'),('7d','Last 7 days'),('30d','Last 30 days')] %}
+      <option value="{{ v }}" {{ 'selected' if filters.period == v }}>{{ l }}</option>
+      {% endfor %}
+    </select>
+    <select class="bd-select" name="sort" style="width:auto;" aria-label="Sort by date" onchange="this.form.submit()">
+      <option value="newest" {{ 'selected' if filters.sort != 'oldest' }}>Most recent</option>
+      <option value="oldest" {{ 'selected' if filters.sort == 'oldest' }}>Oldest</option>
+    </select>
+    <noscript><button type="submit" class="bd-btn bd-btn--primary">Apply</button></noscript>
+    <a href="{{ url_for('resident.my_reports') }}" class="bd-btn bd-btn--quiet">Reset filters</a>
+  </form>
+
+  <div data-live="table">
+  <p class="bd-text-muted mb-2" style="font-size:13px;" aria-live="polite">Showing {{ reports|length }} of {{ total }} {{ 'report' if total == 1 else 'reports' }}</p>
 
   {# ---------- Table ---------- #}
   <div class="table-responsive">
@@ -56,6 +77,7 @@
         <tr>
           <th>Reference / Type</th>
           <th>Location</th>
+          <th>Road condition</th>
           <th>Submitted</th>
           <th>Status</th>
           <th>Verification Result</th>
@@ -64,56 +86,39 @@
         </tr>
       </thead>
       <tbody>
+        {% for r in reports %}
+        {% set v = r.latest_verification %}
         <tr>
           <td>
-            <span class="bd-ref">BDP-2026-1005-1842</span>
-            <span class="bd-ref-sub">Flood report</span>
+            <span class="bd-ref">{{ r.reference }}</span>
+            <span class="bd-ref-sub">{{ r.report_type_label }}</span>
           </td>
-          <td>A. Sandoval Ave, San Joaquin</td>
-          <td>Today · 3:31 PM</td>
-          <td>{{ badge_pending() }}</td>
-          <td>Awaiting barangay review</td>
-          <td>8 min ago</td>
-          <td class="bd-text-right"><a href="{{ url_for('resident.report_detail', report_id='BDP-2026-1005-1842') }}">›</a></td>
-        </tr>
-        <tr>
+          <td>{{ r.road.name if r.road else '—' }}, {{ r.barangay.name }}</td>
           <td>
-            <span class="bd-ref">BDP-2026-1003-1198</span>
-            <span class="bd-ref-sub">Road condition</span>
+            {% if r.road_condition == 'passable' %}{{ pill_passable() }}
+            {% elif r.road_condition == 'caution' %}{{ pill_caution() }}
+            {% elif r.road_condition == 'not_passable' %}{{ pill_not_passable() }}
+            {% else %}<span class="bd-text-muted">—</span>{% endif %}
           </td>
-          <td>Lopez Jaena St, Kalawaan</td>
-          <td>Oct 3 · 5:18 PM</td>
-          <td>{{ badge_verified() }}</td>
-          <td>Included in verified advisory</td>
-          <td>Oct 3 · 5:46 PM</td>
-          <td class="bd-text-right"><a href="#">›</a></td>
-        </tr>
-        <tr>
+          <td>{{ r.created_at|dt('%b %d · %I:%M %p') }}</td>
           <td>
-            <span class="bd-ref">BDP-2026-0929-0874</span>
-            <span class="bd-ref-sub">Flood report</span>
+            {% if r.resident_status == 'verified' %}{{ badge_verified() }}
+            {% elif r.resident_status == 'resolved' %}{{ badge_resolved() }}
+            {% elif r.resident_status == 'rejected' %}{{ badge_rejected() }}
+            {% else %}{{ badge_pending() }}{% endif %}
           </td>
-          <td>F. Mariano Ave, Bambang</td>
-          <td>Sep 29 · 7:04 AM</td>
-          <td>{{ badge_rejected() }}</td>
-          <td>Photo did not match location</td>
-          <td>Sep 29 · 9:22 AM</td>
-          <td class="bd-text-right"><a href="#">›</a></td>
+          <td>{{ (v.remarks or v.decision|title) if v else 'Awaiting barangay review' }}</td>
+          <td>{{ r.latest_update_at|dt('%b %d · %I:%M %p') }}</td>
+          <td class="bd-text-right"><a href="{{ url_for('resident.report_detail', report_id=r.report_id) }}" aria-label="View {{ r.reference }}">›</a></td>
         </tr>
-        <tr>
-          <td>
-            <span class="bd-ref">BDP-2026-0921-0521</span>
-            <span class="bd-ref-sub">Road condition</span>
-          </td>
-          <td>Ilaya St, Kalawaan</td>
-          <td>Sep 21 · 4:40 PM</td>
-          <td>{{ badge_resolved() }}</td>
-          <td>Verified, then marked resolved</td>
-          <td>Sep 22 · 8:15 AM</td>
-          <td class="bd-text-right"><a href="#">›</a></td>
-        </tr>
+        {% else %}
+        <tr><td colspan="8" class="bd-text-muted" style="padding:24px;text-align:center;">
+          {{ 'No reports match the selected filters.' if total else 'You have not submitted any reports yet.' }}
+        </td></tr>
+        {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 
   <div class="mt-4">
@@ -123,4 +128,8 @@
     ) }}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 {% endblock %}

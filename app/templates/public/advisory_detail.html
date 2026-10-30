@@ -1,89 +1,13 @@
 {% extends 'base.html' %}
-{% from 'partials/_macros.html' import badge_verified, pill_not_passable, alert_info %}
+{% from 'partials/_macros.html' import badge_verified, pill_not_passable, pill_caution, alert_info %}
 {% set active_page = 'advisories' %}
-{% block title %}Flooding near A. Sandoval intersection · Bantay Daan Pasig{% endblock %}
-
+{% block title %}{{ advisory.title or (advisory.road.name if advisory.road else 'Road advisory') }} · Bantay Daan Pasig{% endblock %}
 {% block content %}
 <div class="container bd-section" style="max-width:1040px;">
-
-  <nav class="bd-crumbs">
-    <a href="{{ url_for('public.advisories') }}">Advisories</a>
-    <span class="bd-crumbs__sep">›</span>
-    <span>A. Sandoval Avenue</span>
-  </nav>
-
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-    <div>
-      <div class="mb-3">{{ badge_verified() }}</div>
-      <h1 class="bd-detail-title">Flooding near A. Sandoval intersection</h1>
-      <p class="bd-detail-loc">A. Sandoval Ave at E. Santos St · Barangay San Joaquin</p>
-    </div>
-    <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--primary">
-      <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
-      View on Map
-    </a>
-  </div>
-
-  <div class="bd-detail-hero" role="img" aria-label="Placeholder photo of flooded street"></div>
-
-  <div class="bd-detail-grid">
-
-    {# ---------- Left: current condition ---------- #}
-    <div class="bd-card">
-      <h2 class="bd-card__title">Current verified condition</h2>
-
-      <div class="bd-kv">
-        <div>
-          <p class="bd-kv__label">Flood condition</p>
-          <p class="bd-kv__value">Knee-deep floodwater</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Estimated water level</p>
-          <p class="bd-kv__value">Approximately 45 cm</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Road passability</p>
-          <p class="bd-kv__value">{{ pill_not_passable() }}</p>
-        </div>
-      </div>
-
-      <p class="bd-kv__label">Advisory description</p>
-      <p style="font-size:14.5px;margin:0 0 20px;">
-        Floodwater covers both lanes near the E. Santos Street corner. Pedestrians are turning back and vehicles are rerouting toward M. Suarez Avenue. Avoid this segment if possible and check the map for nearby affected roads.
-      </p>
-
-      <p class="bd-kv__label">Location note</p>
-      <p style="font-size:14.5px;margin:0;">Approximately 40 meters east of the A. Sandoval–E. Santos intersection.</p>
-    </div>
-
-    {# ---------- Right: advisory record ---------- #}
-    <div class="bd-card">
-      <h2 class="bd-card__title">Advisory record</h2>
-
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">Reference</p>
-        <p class="bd-record-row__value">ADV-SJ-2026-1005-031</p>
-      </div>
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">Verified by</p>
-        <p class="bd-record-row__value">Authorized Barangay San Joaquin personnel</p>
-      </div>
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">First verified</p>
-        <p class="bd-record-row__value">October 5, 2026 · 2:48 PM</p>
-      </div>
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">Last updated</p>
-        <p class="bd-record-row__value">October 5, 2026 · 3:36 PM</p>
-      </div>
-
-      <div class="mt-3">
-        {{ alert_info(
-          'Community-reported',
-          'Information is near-real-time and may change between updates. Use caution and local judgment.'
-        ) }}
-      </div>
-    </div>
-  </div>
+  <nav class="bd-crumbs"><a href="{{ url_for('public.advisories') }}">Advisories</a><span class="bd-crumbs__sep">›</span><span>{{ advisory.road.name if advisory.road else 'Road details' }}</span></nav>
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3"><div><div class="mb-3">{{ badge_verified() }}</div><h1 class="bd-detail-title">{{ advisory.title or (advisory.road.name if advisory.road else 'Road advisory') }}</h1><p class="bd-detail-loc">{{ advisory.road.name if advisory.road else 'Road unavailable' }} · Barangay {{ advisory.barangay.name if advisory.barangay else 'unavailable' }}</p></div><a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--primary">View on Map</a></div>
+  {% if advisory.report and advisory.report.photo_path %}<img class="bd-detail-hero" src="{{ url_for('public.advisory_photo', advisory_id=advisory.advisory_id) }}" alt="Uploaded report photo" style="width:100%;object-fit:cover;">{% else %}<p class="bd-text-muted">No report photo was uploaded.</p>{% endif %}
+  <div class="bd-detail-grid"><div class="bd-card"><h2 class="bd-card__title">Current verified condition</h2><div class="bd-kv"><div><p class="bd-kv__label">Flood condition</p><p class="bd-kv__value">{{ {'none':'No flooding','gutter':'Gutter-deep','ankle':'Ankle-deep','knee':'Knee-deep','waist_or_higher':'Waist-deep or higher'}.get(advisory.report.water_level, 'Not specified') if advisory.report else 'Not specified' }}</p></div><div><p class="bd-kv__label">Road passability</p><p class="bd-kv__value">{{ {'passable':'Passable','caution':'Difficult to pass','not_passable':'Not passable'}.get(advisory.road_status, advisory.road_status) }}</p></div></div><p class="bd-kv__label">Description</p><p>{{ advisory.report.description if advisory.report and advisory.report.description else advisory.message }}</p></div>
+  <div class="bd-card"><h2 class="bd-card__title">Advisory record</h2><div class="bd-record-row"><p class="bd-record-row__label">Reference</p><p class="bd-record-row__value">{{ advisory.reference }}</p></div><div class="bd-record-row"><p class="bd-record-row__label">Published</p><p class="bd-record-row__value">{{ advisory.published_at|dt('%B %d, %Y · %I:%M %p') }}</p></div><div class="bd-record-row"><p class="bd-record-row__label">Last updated</p><p class="bd-record-row__value">{{ time_ago(advisory.published_at) }}</p></div>{{ alert_info('Community-reported', 'Information may change between updates. Use caution and local judgment.') }}</div></div>
 </div>
 {% endblock %}

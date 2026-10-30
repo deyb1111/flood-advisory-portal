@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% from 'partials/_macros.html' import pill_passable, pill_caution, pill_not_passable, alert_info %}
+{% set active_page = 'community' %}
+{% block title %}Nearby reports · Bantay Daan Pasig{% endblock %}
+{% block content %}
+<div class="container bd-section">
+  <p class="bd-eyebrow">Barangay {{ current_user.barangay.name }}</p>
+  <h1 class="bd-page-title">Nearby reports</h1>
+  <p class="bd-page-sub mb-4">Confirm reports you can also observe. Confirmations help personnel prioritize review but are not official verification.</p>
+
+  <div data-live="list">
+    <div class="table-responsive">
+      <table class="bd-table">
+        <thead>
+          <tr><th>Reference / Type</th><th>Location</th><th>Road condition</th><th>Submitted</th><th>Confirmations</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for r in reports %}
+          <tr>
+            <td><span class="bd-ref">{{ r.reference }}</span><span class="bd-ref-sub">{{ r.report_type_label }}</span></td>
+            <td>{{ r.road.name if r.road else '—' }}</td>
+            <td>
+              {% if r.road_condition == 'passable' %}{{ pill_passable() }}
+              {% elif r.road_condition == 'caution' %}{{ pill_caution() }}
+              {% elif r.road_condition == 'not_passable' %}{{ pill_not_passable() }}
+              {% else %}<span class="bd-text-muted">—</span>{% endif %}
+            </td>
+            <td>{{ r.created_at|dt('%b %d · %I:%M %p') }}</td>
+            <td>{{ r.upvote_count }}{% if r.is_upvoted_by(current_user) %} <span class="bd-text-muted">· you confirmed</span>{% endif %}</td>
+            <td class="bd-text-right"><a href="{{ url_for('resident.community_detail', report_id=r.report_id) }}" aria-label="View {{ r.reference }}">›</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="bd-text-muted" style="padding:24px;text-align:center;">No pending reports from other residents in your barangay.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    {{ alert_info('How confirmations work', 'You can confirm a report once, and not your own. Only residents of the same barangay can confirm. Voting closes when personnel review the report.') }}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
+{% endblock %}

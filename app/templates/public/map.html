@@ -8,22 +8,24 @@
 <div class="bd-map-toolbar">
   <div class="bd-map-search">
     <svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="6" fill="none" stroke-width="1.6"/><path d="M13.5 13.5l4 4"/></svg>
-    <input type="text" class="bd-input" placeholder="Search street, road, or landmark" />
+    <input type="search" id="map-search" class="bd-input" placeholder="Search street, road, or landmark in Pasig" autocomplete="off" aria-label="Search street, road, or landmark" aria-controls="map-search-results" />
+    <ul id="map-search-results" class="bd-search-results" role="listbox" hidden></ul>
   </div>
   <button class="bd-btn bd-btn--secondary" id="btn-my-location">
     <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg></span>
     My location
   </button>
-  <select class="bd-select" style="width:auto;"><option>All barangays</option><option>Kalawaan</option><option>San Joaquin</option><option>Bambang</option></select>
-  <button class="bd-filter is-active" type="button">Verified advisories</button>
-  <select class="bd-select" style="width:auto;"><option>All conditions</option><option>Passable</option><option>Difficult to pass</option><option>Not passable</option></select>
+  <select id="map-barangay" class="bd-select" style="width:auto;" aria-label="Filter by barangay"><option value="all">All barangays</option><option value="Kalawaan">Kalawaan</option><option value="San Joaquin">San Joaquin</option><option value="Bambang">Bambang</option></select>
+  <button id="map-affected" class="bd-filter" type="button" aria-pressed="false">Affected streets only</button>
+  <select id="map-condition" class="bd-select" style="width:auto;" aria-label="Filter by road condition"><option value="all">All conditions</option><option value="passable">Passable</option><option value="caution">Difficult to pass</option><option value="not_passable">Not passable</option></select>
+  <span id="map-count" class="bd-text-muted" style="font-size:13px;" aria-live="polite"></span>
 </div>
 
 <div class="bd-map-shell">
 
   {# ---------- Map canvas ---------- #}
   <div class="bd-map-canvas">
-    <div id="map" aria-label="Interactive map of flood and road advisories"></div>
+    <div id="map" data-geojson="{{ url_for('static', filename='data/pasig.geojson') }}" aria-label="Interactive map of flood and road advisories"></div>
     <div class="bd-map-legend">
       <span class="bd-map-legend__item"><span class="bd-legend-dot bd-legend-dot--flood"></span>Flood reported</span>
       <span class="bd-map-legend__item"><span class="bd-legend-dot bd-legend-dot--affected"></span>Road affected</span>
@@ -36,44 +38,21 @@
   {# ---------- Side detail panel ---------- #}
   <aside class="bd-map-panel" aria-label="Selected advisory">
     <button type="button" class="btn-close float-end" aria-label="Close"></button>
-
     <div class="mt-3 mb-2">{{ badge_verified() }}</div>
-
-    <div class="bd-detail-hero" style="aspect-ratio:16/10;margin:16px 0;" role="img" aria-label="Placeholder photo"></div>
-
-    <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">A. Sandoval Ave near E. Santos St</h2>
-    <p class="bd-text-muted" style="font-size:13px;margin:0 0 16px;">Barangay San Joaquin</p>
-
-    <div class="d-flex justify-content-between py-2" style="border-top:1px solid var(--bd-line);">
-      <span class="bd-text-muted" style="font-size:13px;">Flood condition</span>
-      <strong style="font-size:13.5px;">Knee-deep water</strong>
-    </div>
-    <div class="d-flex justify-content-between py-2" style="border-top:1px solid var(--bd-line);">
-      <span class="bd-text-muted" style="font-size:13px;">Road passability</span>
-      {{ pill_not_passable() }}
-    </div>
-    <div class="d-flex justify-content-between py-2 mb-3" style="border-top:1px solid var(--bd-line);border-bottom:1px solid var(--bd-line);">
-      <span class="bd-text-muted" style="font-size:13px;">Reported water level</span>
-      <strong style="font-size:13.5px;">Approx. 45 cm</strong>
-    </div>
-
-    {{ alert_success(
-      'Verified information',
-      'Reviewed by authorized Barangay San Joaquin personnel. Pending resident submissions are not shown as official advisories.'
-    ) }}
-
-    <p style="font-size:13.5px;margin:16px 0;">Floodwater covers both lanes. Vehicles are rerouting toward M. Suarez Avenue. Avoid this segment if possible.</p>
-
-    <div class="d-flex justify-content-between mb-3">
-      <span class="bd-text-muted" style="font-size:12.5px;">Last updated</span>
-      <span class="bd-text-muted" style="font-size:12.5px;">Today, 3:36 PM</span>
-    </div>
-
-    <a href="{{ url_for('public.advisory_detail', advisory_id='ADV-SJ-2026-1005-031') }}" class="bd-btn bd-btn--primary w-100 justify-content-center">View full advisory</a>
+    <img data-detail="image" class="bd-detail-hero" style="aspect-ratio:16/10;margin:16px 0;object-fit:cover;width:100%;" alt="Uploaded report photo" hidden>
+    <h2 data-detail="title" style="font-size:20px;font-weight:700;margin:0 0 4px;">Select an advisory on the map</h2>
+    <p data-detail="barangay" class="bd-text-muted" style="font-size:13px;margin:0 0 16px;">No advisory selected</p>
+    <div class="d-flex justify-content-between py-2" style="border-top:1px solid var(--bd-line);"><span class="bd-text-muted" style="font-size:13px;">Street / road</span><strong data-detail="road" style="font-size:13.5px;">—</strong></div>
+    <div class="d-flex justify-content-between py-2" style="border-top:1px solid var(--bd-line);"><span class="bd-text-muted" style="font-size:13px;">Road condition</span><strong data-detail="condition" style="font-size:13.5px;">—</strong></div>
+    <p data-detail="description" style="font-size:13.5px;margin:16px 0;">Select a marker to view its verified report details.</p>
+    <div class="d-flex justify-content-between mb-3"><span class="bd-text-muted" style="font-size:12.5px;">Last updated</span><span data-detail="updated" class="bd-text-muted" style="font-size:12.5px;">—</span></div>
+    <a data-detail="link" href="{{ url_for('public.advisories') }}" class="bd-btn bd-btn--primary w-100 justify-content-center">View full advisory</a>
   </aside>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="{{ url_for('static', filename='js/pasig-boundary.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 {% endblock %}

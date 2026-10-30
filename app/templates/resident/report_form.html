@@ -68,10 +68,10 @@
       <div class="bd-form-row">
         <label class="bd-field">
           <span class="bd-field__label">Barangay *</span>
-          <select class="bd-select" name="barangay_id" required>
-            <option value="1">Barangay San Joaquin</option>
-            <option value="2">Barangay Kalawaan</option>
-            <option value="3">Barangay Bambang</option>
+          <select class="bd-select" name="barangay_id" required data-roads='{{ roads_by_barangay|tojson }}' data-road-coords='{{ road_coords|tojson }}'>
+            {% for b in barangays %}
+            <option value="{{ b.barangay_id }}" data-name="{{ b.name }}">Barangay {{ b.name }}</option>
+            {% endfor %}
           </select>
         </label>
         <label class="bd-field">
@@ -79,12 +79,12 @@
           <select class="bd-select" id="road-select" name="road_name" required>
             <option value="">Select a barangay first</option>
           </select>
-          <span class="bd-field__help">Choose a listed street or select “Other” to enter a specific street.</span>
+          <span class="bd-field__help">Choose a listed main thoroughfare or select “Other” to enter a specific street.</span>
         </label>
       </div>
 
       <div class="bd-form-map">
-        <div id="map-picker" aria-label="Pin your observation location"></div>
+        <div id="map-picker" aria-label="Pin your observation location" data-fallback-boundary="{{ url_for('static', filename='data/pasig.geojson') }}"></div>
         <button type="button" class="bd-form-map__action" id="btn-use-location">
           <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3"/></svg>
           Use my location
@@ -96,6 +96,7 @@
       <label class="bd-field" id="custom-road-wrap" hidden>
         <span class="bd-field__label">Specific street / road *</span>
         <input type="text" class="bd-input" id="custom-road" name="custom_road" maxlength="150" placeholder="Enter the street or road name" />
+        <span class="bd-field__help">Drag the pin on the map to the exact spot.</span>
       </label>
 
       <label class="bd-field">
@@ -122,7 +123,7 @@
             <option value="none">No flooding</option>
             <option value="gutter">Gutter-deep</option>
             <option value="ankle">Ankle-deep</option>
-            <option value="knee" selected>Knee-deep (approximately 45 cm)</option>
+            <option value="knee">Knee-deep (approximately 45 cm)</option>
             <option value="waist_or_higher">Waist-deep or higher</option>
           </select>
         </label>

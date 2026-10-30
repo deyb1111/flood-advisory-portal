@@ -1,4 +1,4 @@
-/* Resident report form: barangay-scoped road choices and current observation time. */
+/* Resident report form: official, barangay-scoped road choices and current observation time. */
 (function () {
   'use strict';
 
@@ -10,13 +10,9 @@
   const form = document.getElementById('report-form');
   if (!form) return;
 
-  // Keep options grouped by the selected barangay. “Other” permits a resident
-  // to report a street that is not yet in the local list.
-  const roadsByBarangay = {
-    '1': ['A. Sandoval Avenue', 'M. Concepcion Avenue', 'Lopez Jaena Street'],
-    '2': ['Lopez Jaena Street', 'Ilaya Street', 'F. Mariano Avenue'],
-    '3': ['F. Mariano Avenue', 'Ilaya Street', 'M. Concepcion Avenue']
-  };
+  // Official thoroughfares per barangay, injected by the server (app/services/roads.py).
+  let roadsByBarangay = {};
+  try { roadsByBarangay = JSON.parse((barangay && barangay.dataset.roads) || '{}'); } catch (e) { /* keep empty */ }
 
   function updateRoads() {
     if (!roadSelect || !barangay) return;
@@ -26,12 +22,13 @@
     placeholder.value = '';
     placeholder.textContent = 'Select a street / road';
     roadSelect.appendChild(placeholder);
-    (roadsByBarangay[barangay.value] || []).forEach(function (name) {
+    (roadsByBarangay[barangay.selectedOptions[0].dataset.name] || []).forEach(function (name) {
       const option = document.createElement('option');
       option.value = name;
       option.textContent = name;
       roadSelect.appendChild(option);
     });
+    // “Other” lets a resident report a street that is not in the official list.
     const other = document.createElement('option');
     other.value = '__other__';
     other.textContent = 'Other — enter a specific street';
@@ -49,6 +46,16 @@
       customRoad.required = Boolean(isOther);
       if (!isOther) customRoad.value = '';
     }
+  }
+
+  // Road focus points per barangay, injected by the server (OFFICIAL_ROAD_COORDS).
+  let coordsByBarangay = {};
+  try { coordsByBarangay = JSON.parse((barangay && barangay.dataset.roadCoords) || '{}'); } catch (e) { /* keep empty */ }
+
+  function focusRoad() {
+    if (!roadSelect || !barangay || !roadSelect.value || !window.BDReportMap) return;
+    const coords = (coordsByBarangay[barangay.selectedOptions[0].dataset.name] || {})[roadSelect.value];
+    if (coords) window.BDReportMap.focus(coords[0], coords[1], roadSelect.value);
   }
 
   function localDateTimeValue(date) {
@@ -70,6 +77,7 @@
   if (barangay && roadSelect) {
     barangay.addEventListener('change', updateRoads);
     roadSelect.addEventListener('change', updateCustomRoad);
+    roadSelect.addEventListener('change', focusRoad);
     updateRoads();
   }
 

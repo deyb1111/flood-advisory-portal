@@ -1,139 +1,138 @@
 {% extends 'base.html' %}
-{% from 'partials/_macros.html' import badge_pending, alert_warning %}
+{% from 'partials/_macros.html' import badge_verified, badge_pending, badge_rejected, badge_resolved, pill_passable, pill_caution, pill_not_passable, alert_info, alert_warning, alert_success %}
 {% set active_page = 'my_reports' %}
-{% block title %}Flood report · Bantay Daan Pasig{% endblock %}
+{% block title %}{{ report.display_title }} · Bantay Daan Pasig{% endblock %}
 
 {% block content %}
+{% set v = report.latest_verification %}
 <div class="container bd-section" style="max-width:1040px;">
 
   <nav class="bd-crumbs">
     <a href="{{ url_for('resident.my_reports') }}">My Reports</a>
     <span class="bd-crumbs__sep">›</span>
-    <span>BDP-2026-1005-1842</span>
+    <span>{{ report.reference }}</span>
   </nav>
 
-  <div class="mb-3">{{ badge_pending() }}</div>
-
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
-      <h1 class="bd-page-title">Flood report</h1>
-      <p class="bd-page-sub">Reference BDP-2026-1005-1842</p>
+      <div class="mb-3" data-live="status-head">
+        {% set rs = report.resident_status %}
+        {% if rs == 'verified' %}{{ badge_verified() }}{% elif rs == 'resolved' %}{{ badge_resolved() }}
+        {% elif rs == 'rejected' %}{{ badge_rejected() }}{% else %}{{ badge_pending() }}{% endif %}
+      </div>
+      <h1 class="bd-detail-title">{{ report.display_title }}</h1>
+      <p class="bd-detail-loc">{{ report.road.name if report.road else 'Road not specified' }} · Barangay {{ report.barangay.name }}</p>
     </div>
-    <a href="{{ url_for('resident.my_reports') }}" class="bd-btn bd-btn--secondary">Back to My Reports</a>
+    <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--primary">
+      <span class="bd-btn__icon"><svg viewBox="0 0 20 20"><path d="M10 18s6-6 6-11a6 6 0 10-12 0c0 5 6 11 6 11z"/><circle cx="10" cy="7" r="2"/></svg></span>
+      View on Map
+    </a>
   </div>
 
-  <div class="mb-4">
-    {{ alert_warning(
-      'Not yet an official advisory',
-      'This submission is awaiting review. It is visible only in your report history and will not appear as verified public information unless authorized barangay personnel confirm it.'
-    ) }}
+  <div class="mt-4" data-live="status-alert">
+    {% if report.status == 'verified' %}
+      {{ alert_success('Verified by barangay personnel', 'This report was reviewed and accepted. Verification alone does not publish an advisory.') }}
+    {% elif report.status == 'rejected' %}
+      {{ alert_warning('Report not accepted', 'Barangay personnel did not accept this report.') }}
+    {% else %}
+      {{ alert_warning('Not yet an official advisory', 'This submission is awaiting review. It is visible only in your report history and will not appear as verified public information unless authorized barangay personnel confirm it.') }}
+    {% endif %}
+  </div>
+
+  <div data-live="photo">
+    {% if report.photo_path %}
+    {# FIX 1: Assign the complex url to a variable to prevent CSS parser errors #}
+    {% set photo_url = url_for('resident.report_photo', report_id=report.report_id, filename=report.photo_path.split('/')[-1]) %}
+    <div class="bd-detail-hero" role="img" aria-label="Photo submitted with report {{ report.short_ref }}"
+         style="background-image:url('{{ photo_url }}');"></div>
+    {% else %}
+    <div class="bd-detail-hero" role="img" aria-label="No photo attached to this report"></div>
+    {% endif %}
   </div>
 
   <div class="bd-detail-grid">
 
+    {# ---------- Left: reported / verified condition ---------- #}
     <div class="bd-card">
-      <h2 class="bd-card__title">Submitted information</h2>
+      <h2 class="bd-card__title">{{ 'Current verified condition' if report.status == 'verified' else 'Reported condition' }}</h2>
 
       <div class="bd-kv">
         <div>
+          <p class="bd-kv__label">{{ 'Flood condition' if report.report_type == 'flood' else 'Traffic condition' }}</p>
+          <p class="bd-kv__value">{{ report.condition_label or '—' }}</p>
+        </div>
+        <div>
           <p class="bd-kv__label">Report type</p>
-          <p class="bd-kv__value">Flood</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Barangay</p>
-          <p class="bd-kv__value">Barangay San Joaquin</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Street / road</p>
-          <p class="bd-kv__value">A. Sandoval Avenue</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Nearest landmark</p>
-          <p class="bd-kv__value">Near E. Santos Street corner</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Observation time</p>
-          <p class="bd-kv__value">October 5, 2026 · 3:28 PM</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Submitted time</p>
-          <p class="bd-kv__value">October 5, 2026 · 3:31 PM</p>
-        </div>
-        <div>
-          <p class="bd-kv__label">Water level / flood condition</p>
-          <p class="bd-kv__value">Knee-deep, approximately 45 cm</p>
+          <p class="bd-kv__value">{{ report.report_type_label }}</p>
         </div>
         <div>
           <p class="bd-kv__label">Road passability</p>
-          <p class="bd-kv__value">Not passable</p>
+          <p class="bd-kv__value">
+            {% set rc = report.road_condition %}
+            {% if rc == 'passable' %}{{ pill_passable() }}{% elif rc == 'caution' %}{{ pill_caution() }}
+            {% elif rc == 'not_passable' %}{{ pill_not_passable() }}{% else %}—{% endif %}
+          </p>
         </div>
       </div>
 
       <p class="bd-kv__label">Description</p>
-      <p style="font-size:14.5px;">Floodwater covers both lanes. Pedestrians are turning back and vehicles are rerouting toward M. Suarez Avenue.</p>
+      <p style="font-size:14.5px;margin:0 0 20px;">{{ report.description or '—' }}</p>
 
-      <div class="mt-3">
-        <img src="{{ url_for('static', filename='img/placeholder-flood.jpg') }}"
-             alt="Submitted photo (placeholder)"
-             style="max-width:340px;width:100%;border-radius:8px;" />
-      </div>
+      <p class="bd-kv__label">Location note</p>
+      <p style="font-size:14.5px;margin:0 0 16px;">
+        {{ report.road.name if report.road else 'Road not specified' }}, Barangay {{ report.barangay.name }}
+        (pinned at {{ '%.5f'|format(report.latitude) }}, {{ '%.5f'|format(report.longitude) }}).
+      </p>
 
-      <div class="bd-form-map mt-3" style="height:220px;">
+      <div class="bd-form-map" style="height:220px;margin-bottom:0;">
         <div id="report-detail-map" aria-label="Report location map"></div>
       </div>
     </div>
 
-    <div class="bd-card">
-      <h2 class="bd-card__title">Status timeline</h2>
-
-      <ul class="bd-timeline">
-        <li>
-          <span class="bd-timeline__dot bd-timeline__dot--done">
-            <svg viewBox="0 0 16 16"><path d="M4 8.5l3 3 6-7"/></svg>
-          </span>
-          <div>
-            <div class="d-flex justify-content-between">
-              <p class="bd-timeline__title">Report submitted</p>
-              <span class="bd-timeline__time">3:31 PM</span>
-            </div>
-            <p class="bd-timeline__meta">Your report and optional photo were received.</p>
+    {# ---------- Right: report record + timeline ---------- #}
+    <div>
+      <div class="bd-card">
+        <h2 class="bd-card__title">Report record</h2>
+        <div data-live="timeline">
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Reference</p>
+            <p class="bd-record-row__value">{{ report.reference }}</p>
           </div>
-        </li>
-        <li>
-          <span class="bd-timeline__dot bd-timeline__dot--current">
-            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none"/><path d="M8 5.5V8l2 1.5"/></svg>
-          </span>
-          <div>
-            <div class="d-flex justify-content-between">
-              <p class="bd-timeline__title">Pending Verification</p>
-              <span class="bd-timeline__time">Current</span>
-            </div>
-            <p class="bd-timeline__meta">Authorized Barangay San Joaquin personnel have been notified for review.</p>
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Reported by</p>
+            <p class="bd-record-row__value">{{ report.user.full_name }} (you)</p>
           </div>
-        </li>
-        <li>
-          <span class="bd-timeline__dot">
-            <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none"/></svg>
-          </span>
-          <div>
-            <div class="d-flex justify-content-between">
-              <p class="bd-timeline__title">Verification result</p>
-              <span class="bd-timeline__time">—</span>
-            </div>
-            <p class="bd-timeline__meta">A result will appear here after review. You cannot publish or change the verification status.</p>
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Submitted</p>
+            <p class="bd-record-row__value">{{ report.created_at|dt('%B %d, %Y · %I:%M %p') }}</p>
           </div>
-        </li>
-      </ul>
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">{{ 'Verified by' if v and v.decision == 'verified' else 'Reviewed by' }}</p>
+            <p class="bd-record-row__value">{{ ('Authorized Barangay ' ~ report.barangay.name ~ ' personnel') if v else 'Awaiting barangay review' }}</p>
+          </div>
+          {% if report.first_verified_at %}
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">First verified</p>
+            <p class="bd-record-row__value">{{ report.first_verified_at|dt('%B %d, %Y · %I:%M %p') }}</p>
+          </div>
+          {% endif %}
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Last updated</p>
+            <p class="bd-record-row__value">{{ report.latest_update_at|dt('%B %d, %Y · %I:%M %p') }}</p>
+          </div>
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Verification result</p>
+            <p class="bd-record-row__value">{{ report.status_label if v else 'Awaiting barangay review' }}{{ ' — ' ~ v.remarks if v and v.remarks else '' }}</p>
+          </div>
+          <div class="bd-record-row">
+            <p class="bd-record-row__label">Community confirmations</p>
+            <p class="bd-record-row__value">{{ report.upvote_count }} nearby {{ 'resident' if report.upvote_count == 1 else 'residents' }}</p>
+          </div>
+        </div>
 
-      <hr class="bd-divider" />
-
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">Latest update</p>
-        <p class="bd-record-row__value">October 5, 2026 · 3:31 PM</p>
-      </div>
-      <div class="bd-record-row">
-        <p class="bd-record-row__label">Verification result</p>
-        <p class="bd-record-row__value">Awaiting barangay review</p>
+        <div class="mt-3">
+          {{ alert_info('Community-reported', 'Information is near-real-time and may change between updates. Use caution and local judgment.') }}
+        </div>
       </div>
     </div>
   </div>
@@ -141,13 +140,21 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('report-detail-map')) return;
+    
+    // FIX 2: Parse Jinja variables safely to prevent JS parser errors
+    var lat = parseFloat("{{ report.latitude }}");
+    var lng = parseFloat("{{ report.longitude }}");
+
     var map = L.map('report-detail-map', { zoomControl: true, attributionControl: false })
-               .setView([14.5764, 121.0851], 15);
+               .setView([lat, lng], 15);
+               
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    L.circleMarker([14.5764, 121.0851], {
+    
+    L.circleMarker([lat, lng], {
       radius: 8, color: '#b13a3a', fillColor: '#b13a3a', fillOpacity: 1, weight: 3
     }).addTo(map);
   });

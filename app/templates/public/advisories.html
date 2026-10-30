@@ -34,108 +34,38 @@
       <select id="advisoryFloodFilter" class="bd-select" aria-label="Filter by flood condition" style="width:auto;"><option value="all">All flood conditions</option><option value="Gutter-deep">Gutter-deep</option><option value="Ankle-deep">Ankle-deep</option><option value="Knee-deep">Knee-deep</option><option value="Waist-deep or higher">Waist-deep or higher</option></select>
       <select id="advisoryRoadFilter" class="bd-select" aria-label="Filter by road condition" style="width:auto;"><option value="all">All road conditions</option><option value="Passable">Passable</option><option value="Difficult to pass">Difficult to pass</option><option value="Not passable">Not passable</option></select>
       <button id="applyAdvisoryFilters" class="bd-filter is-active" type="button">Most recent</button>
-      <span id="advisoryFilterCount" class="ms-auto bd-text-muted" style="font-size:13px;" aria-live="polite">5 active advisories</span>
+      <span id="advisoryFilterCount" class="ms-auto bd-text-muted" style="font-size:13px;" aria-live="polite">{{ advisories|length }} active advisories</span>
     </div>
   </div>
 
   {# ---------- Advisory grid ---------- #}
   <div id="verifiedAdvisoryGrid" class="bd-grid-2">
-
-    <article class="bd-advisory-card bd-advisory-card--media" data-barangay="San Joaquin" data-flood="Waist-deep or higher" data-road="Not passable" data-sort="5">
-      <div class="bd-advisory-card__thumb" role="img" aria-label="Placeholder photo"></div>
-      <div>
-        <div class="bd-advisory-card__top">
-          {{ badge_verified() }}
-          <span class="bd-advisory-card__time">Updated 6 min ago</span>
-        </div>
-        <h3 class="bd-advisory-card__title mt-2">Flooding near A. Sandoval intersection</h3>
-        <p class="bd-advisory-card__loc">San Joaquin · A. Sandoval Ave at E. Santos St</p>
-        <div class="bd-advisory-card__tags my-2">
-          {{ pill_not_passable() }}
-          <span class="bd-chip">Flood reported</span>
-        </div>
-        <p class="bd-advisory-card__desc">Floodwater covers both lanes. Vehicles are rerouting toward M. Suarez Avenue.</p>
-        <div class="bd-advisory-card__actions">
-          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">View on Map</a>
-          <a href="{{ url_for('public.advisory_detail', advisory_id='ADV-SJ-2026-1005-031') }}">View details</a>
-        </div>
-      </div>
-    </article>
-
-    <article class="bd-advisory-card" data-barangay="Kalawaan" data-flood="Gutter-deep" data-road="Difficult to pass" data-sort="4">
+    {% for a in advisories %}
+    <article class="bd-advisory-card" data-barangay="{{ a.barangay.name if a.barangay else '' }}"
+      data-flood="{{ {'none':'No flooding','gutter':'Gutter-deep','ankle':'Ankle-deep','knee':'Knee-deep','waist_or_higher':'Waist-deep or higher'}.get(a.report.water_level, '') if a.report else '' }}"
+      data-road="{{ {'passable':'Passable','caution':'Difficult to pass','not_passable':'Not passable'}.get(a.road_status, '') }}"
+      data-sort="{{ a.published_at.timestamp() if a.published_at else 0 }}">
       <div class="bd-advisory-card__top">
         {{ badge_verified() }}
-        <span class="bd-advisory-card__time">Updated 21 min ago</span>
+        <span class="bd-advisory-card__time">Updated {{ time_ago(a.published_at) }}</span>
       </div>
-      <h3 class="bd-advisory-card__title">Water receding along Lopez Jaena</h3>
-      <p class="bd-advisory-card__loc">Kalawaan · Lopez Jaena St</p>
+      <h3 class="bd-advisory-card__title">{{ a.title or (a.road.name if a.road else 'Road advisory') }}</h3>
+      <p class="bd-advisory-card__loc">{{ a.barangay.name if a.barangay else 'Pasig City' }} · {{ a.road.name if a.road else 'Road location unavailable' }}</p>
       <div class="bd-advisory-card__tags">
-        {{ pill_caution() }}
-        <span class="bd-chip">Flood reported</span>
+        {% if a.road_status == 'not_passable' %}{{ pill_not_passable() }}
+        {% elif a.road_status == 'caution' %}{{ pill_caution() }}
+        {% else %}<span class="bd-pill bd-pill--passable">Passable</span>{% endif %}
+        {% if a.report %}<span class="bd-chip">{{ 'Flood' if a.report.report_type == 'flood' else 'Traffic' }} reported</span>{% endif %}
       </div>
-      <p class="bd-advisory-card__desc">Water remains gutter-deep in the eastbound lane. Motorcycles are advised to use caution.</p>
+      <p class="bd-advisory-card__desc">{{ a.message }}</p>
       <div class="bd-advisory-card__actions">
         <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">View on Map</a>
-        <a href="#">View details</a>
+        <a href="{{ url_for('public.advisory_detail', advisory_id=a.advisory_id) }}">View details</a>
       </div>
     </article>
-
-    <article class="bd-advisory-card" data-barangay="Bambang" data-flood="Ankle-deep" data-road="Difficult to pass" data-sort="3">
-      <div class="bd-advisory-card__top">
-        {{ badge_verified() }}
-        <span class="bd-advisory-card__time">Updated 44 min ago</span>
-      </div>
-      <h3 class="bd-advisory-card__title">Water rising beside C. Raymundo extension</h3>
-      <p class="bd-advisory-card__loc">Bambang · M. Concepcion Ave</p>
-      <div class="bd-advisory-card__tags">
-        {{ pill_caution() }}
-        <span class="bd-chip">Flood reported</span>
-      </div>
-      <p class="bd-advisory-card__desc">Slow traffic near the flooded curb. Light vehicles are passing one at a time.</p>
-      <div class="bd-advisory-card__actions">
-        <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">View on Map</a>
-        <a href="#">View details</a>
-      </div>
-    </article>
-
-    <article class="bd-advisory-card bd-advisory-card--media" data-barangay="Bambang" data-flood="Ankle-deep" data-road="Passable" data-sort="2">
-      <div class="bd-advisory-card__thumb" role="img" aria-label="Placeholder photo"></div>
-      <div>
-        <div class="bd-advisory-card__top">
-          {{ badge_verified() }}
-          <span class="bd-advisory-card__time">Updated 1 hr ago</span>
-        </div>
-        <h3 class="bd-advisory-card__title mt-2">Road passable near Bambang bridge approach</h3>
-        <p class="bd-advisory-card__loc">Bambang · F. Mariano Ave</p>
-        <div class="bd-advisory-card__tags my-2">
-          <span class="bd-pill bd-pill--passable">Passable with caution</span>
-          <span class="bd-chip">Flood reported</span>
-        </div>
-        <p class="bd-advisory-card__desc">Standing water remains near the shoulder, but both lanes are open.</p>
-        <div class="bd-advisory-card__actions">
-          <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">View on Map</a>
-          <a href="#">View details</a>
-        </div>
-      </div>
-    </article>
-
-    <article class="bd-advisory-card" data-barangay="Kalawaan" data-flood="Gutter-deep" data-road="Passable" data-sort="1">
-      <div class="bd-advisory-card__top">
-        {{ badge_verified() }}
-        <span class="bd-advisory-card__time">Updated 1 hr 18 min ago</span>
-      </div>
-      <h3 class="bd-advisory-card__title">Minor ponding at Ilaya junction</h3>
-      <p class="bd-advisory-card__loc">Kalawaan · Ilaya St</p>
-      <div class="bd-advisory-card__tags">
-        <span class="bd-pill bd-pill--passable">Passable with caution</span>
-        <span class="bd-chip">Flood reported</span>
-      </div>
-      <div class="bd-advisory-card__actions">
-        <a href="{{ url_for('public.map') }}" class="bd-btn bd-btn--secondary">View on Map</a>
-        <a href="#">View details</a>
-      </div>
-    </article>
-
+    {% else %}
+    <p class="bd-text-muted">No active verified advisories right now.</p>
+    {% endfor %}
   </div>
 </div>
 <p id="noAdvisoriesMatch" class="bd-text-muted mt-3" hidden>No verified advisories match the selected filters.</p>

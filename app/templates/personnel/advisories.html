@@ -43,7 +43,7 @@
         <th class="text-end">Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody data-live="personnel-advisories">
       {% for a in advisories %}
       <tr>
         <td>
@@ -81,4 +81,7 @@
   <h2 class="bd-card__title mb-2">Keep resident information current</h2>
   <p style="font-size:14px;">Review published advisories when new verified observations arrive. Edit a current advisory to clarify information, or archive it when conditions are no longer current. Archived entries are clearly marked as outdated.</p>
 </div>
+{% endblock %}
+{% block personnel_scripts %}
+<script src="{{ url_for('static', filename='js/live-refresh.js') }}"></script>
 {% endblock %}

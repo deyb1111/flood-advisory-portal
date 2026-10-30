@@ -14,8 +14,8 @@
     {# ---------- Profile card ---------- #}
     <aside class="bd-card bd-profile-card">
       <div class="bd-profile-avatar" aria-hidden="true"></div>
-      <p class="bd-profile-name">Maria Santos</p>
-      <p class="bd-profile-email">maria.santos@example.com</p>
+      <p class="bd-profile-name">{{ current_user.full_name }}</p>
+      <p class="bd-profile-email">{{ current_user.email }}</p>
       <span class="bd-chip">Resident account</span>
       <p class="bd-text-muted mt-3" style="font-size:12.5px;">Used only for report history and verification updates in this portal.</p>
     </aside>
@@ -23,31 +23,28 @@
     {# ---------- Form ---------- #}
     <section class="bd-card">
       <h2 class="bd-card__title">Resident information</h2>
-      <form method="POST" action="#">
+      <form method="POST" action="{{ url_for('resident.profile') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        <div class="bd-form-row">
-          <label class="bd-field">
-            <span class="bd-field__label">First name</span>
-            <input type="text" class="bd-input" name="first_name" value="Maria" />
-          </label>
-          <label class="bd-field">
-            <span class="bd-field__label">Last name</span>
-            <input type="text" class="bd-input" name="last_name" value="Santos" />
-          </label>
-        </div>
+        <label class="bd-field">
+          <span class="bd-field__label">Full name</span>
+          <input type="text" class="bd-input" name="full_name" value="{{ current_user.full_name }}" required maxlength="120" />
+        </label>
 
         <label class="bd-field">
           <span class="bd-field__label">Email address</span>
-          <input type="email" class="bd-input" name="email" value="maria.santos@example.com" />
+          <input type="email" class="bd-input" name="email" value="{{ current_user.email }}" required maxlength="190" />
+        </label>
+
+        <label class="bd-field">
+          <span class="bd-field__label">Current password <span class="bd-text-muted">(required only when changing email)</span></span>
+          <input type="password" class="bd-input" name="current_password" autocomplete="current-password" />
         </label>
 
         <label class="bd-field">
           <span class="bd-field__label">Home barangay</span>
-          <select class="bd-select" name="barangay_id">
-            <option>Barangay Kalawaan</option>
-            <option selected>Barangay San Joaquin</option>
-            <option>Barangay Bambang</option>
-          </select>
+          <input type="text" class="bd-input" value="Barangay {{ current_user.barangay.name }}" disabled readonly />
+          <span class="bd-text-muted" style="font-size:12.5px;">Fixed at registration and cannot be changed.</span>
         </label>
 
         <label class="bd-field">
@@ -73,6 +70,26 @@
           <a href="{{ url_for('auth.logout') }}" class="bd-btn bd-btn--quiet">Sign out</a>
           <button type="submit" class="bd-btn bd-btn--primary">Save changes</button>
         </div>
+      </form>
+      <hr class="my-4" />
+      <h2 class="bd-card__title">Change password</h2>
+      <form method="POST" action="{{ url_for('resident.profile_password') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label class="bd-field">
+          <span class="bd-field__label">Current password</span>
+          <input type="password" class="bd-input" name="current_password" autocomplete="current-password" required />
+        </label>
+        <div class="bd-form-row">
+          <label class="bd-field">
+            <span class="bd-field__label">New password</span>
+            <input type="password" class="bd-input" name="new_password" minlength="12" autocomplete="new-password" placeholder="At least 12 characters" required />
+          </label>
+          <label class="bd-field">
+            <span class="bd-field__label">Confirm new password</span>
+            <input type="password" class="bd-input" name="confirm_password" minlength="12" autocomplete="new-password" required />
+          </label>
+        </div>
+        <button type="submit" class="bd-btn bd-btn--secondary">Update password</button>
       </form>
     </section>
   </div>
